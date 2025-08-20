@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { translations, type Language } from "@/lib/translations"
 
+type TranslationValue = string | { [key: string]: TranslationValue }
+
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
@@ -29,18 +31,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string): string => {
     const keys = key.split(".")
-    let value: any = translations[language]
+    let value: TranslationValue = translations[language]
 
     for (const k of keys) {
       if (value && typeof value === "object" && k in value) {
-        value = value[k]
+        value = (value as { [key: string]: TranslationValue })[k]
       } else {
         // Fallback to English if key not found
         value = translations.en
         for (const fallbackKey of keys) {
           if (value && typeof value === "object" && fallbackKey in value) {
-            value = value[fallbackKey]
-          } else {
+            value = (value as { [key: string]: TranslationValue })[k]
+
             return key // Return key if not found in fallback
           }
         }

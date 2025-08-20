@@ -1,5 +1,9 @@
 "use client"
-
+import React from 'react';
+import "@/styles/globals.css"
+import "@/styles/tabs.css"
+import "@/styles/interactive-menu-card.css"
+import "@/styles/footer.css"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InteractiveMenuCard } from "@/components/interactive-menu-card"
 import { MainNav } from "@/components/main-nav"

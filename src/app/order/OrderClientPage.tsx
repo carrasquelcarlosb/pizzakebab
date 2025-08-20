@@ -27,6 +27,20 @@ interface OrderForm {
   cvv?: string
 }
 
+interface FormErrors {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  address?: string
+  city?: string
+  zipCode?: string
+  paymentMethod?: string
+  cardNumber?: string
+  expiryDate?: string
+  cvv?: string
+}
+
 function OrderContent() {
   const { t } = useLanguage()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,7 +57,7 @@ function OrderContent() {
     expiryDate: "",
     cvv: "",
   })
-  const [errors, setErrors] = useState<Partial<OrderForm>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -56,19 +70,19 @@ function OrderContent() {
   const validateForm = (): boolean => {
     const newErrors: Partial<OrderForm> = {}
 
-    if (!formData.firstName) newErrors.firstName = "First name is required"
-    if (!formData.lastName) newErrors.lastName = "Last name is required"
-    if (!formData.email) newErrors.email = "Email is required"
-    if (!formData.phone) newErrors.phone = "Phone number is required"
-    if (!formData.address) newErrors.address = "Address is required"
-    if (!formData.city) newErrors.city = "City is required"
-    if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
-    if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
+    if (!formData.firstName) newErrors.firstName = t("order.errors.firstNameRequired")
+    if (!formData.lastName) newErrors.lastName = t("order.errors.lastNameRequired")
+    if (!formData.email) newErrors.email = t("order.errors.emailRequired")
+    if (!formData.phone) newErrors.phone = t("order.errors.phoneRequired")
+    if (!formData.address) newErrors.address = t("order.errors.addressRequired")
+    if (!formData.city) newErrors.city = t("order.errors.cityRequired")
+    if (!formData.zipCode) newErrors.zipCode = t("order.errors.zipCodeRequired")
+    if (!formData.paymentMethod) newErrors.paymentMethod = t("order.errors.paymentMethodRequired")
 
     if (formData.paymentMethod === "card") {
-      if (!formData.cardNumber) newErrors.cardNumber = "Card number is required"
-      if (!formData.expiryDate) newErrors.expiryDate = "Expiry date is required"
-      if (!formData.cvv) newErrors.cvv = "CVV is required"
+      if (!formData.cardNumber) newErrors.cardNumber = t("order.errors.cardNumberRequired")
+      if (!formData.expiryDate) newErrors.expiryDate = t("order.errors.expiryDateRequired")
+      if (!formData.cvv) newErrors.cvv = t("order.errors.cvvRequired")
     }
 
     setErrors(newErrors)
@@ -114,41 +128,41 @@ function OrderContent() {
 
       <main className="flex-1">
         <div className="container py-8">
-          <h1 className="text-3xl font-bold mb-8">Complete Your Order</h1>
+          <h1 className="text-3xl font-bold mb-8">{t("order.title")}</h1>
 
           <form onSubmit={(e) => onSubmit(e)} className="grid md:grid-cols-2 gap-8">
             {/* Customer Information */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Customer Information</CardTitle>
+                  <CardTitle>{t("order.customerInfo")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">{t("order.firstName")}</Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
                         className={errors.firstName ? "border-red-500" : ""}
                       />
-                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
+                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">{t("order.lastName")}</Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
                         className={errors.lastName ? "border-red-500" : ""}
                       />
-                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("order.email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -156,18 +170,18 @@ function OrderContent() {
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       className={errors.email ? "border-red-500" : ""}
                     />
-                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">{t("order.phone")}</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       className={errors.phone ? "border-red-500" : ""}
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -175,40 +189,40 @@ function OrderContent() {
               {/* Delivery Address */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Delivery Address</CardTitle>
+                  <CardTitle>{t("order.deliveryAddress")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="address">Street Address</Label>
+                    <Label htmlFor="address">{t("order.streetAddress")}</Label>
                     <Input
                       id="address"
                       value={formData.address}
                       onChange={(e) => handleInputChange("address", e.target.value)}
                       className={errors.address ? "border-red-500" : ""}
                     />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="city">City</Label>
+                      <Label htmlFor="city">{t("order.city")}</Label>
                       <Input
                         id="city"
                         value={formData.city}
                         onChange={(e) => handleInputChange("city", e.target.value)}
                         className={errors.city ? "border-red-500" : ""}
                       />
-                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
+                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="zipCode">ZIP Code</Label>
+                      <Label htmlFor="zipCode">{t("order.zipCode")}</Label>
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange("zipCode", e.target.value)}
                         className={errors.zipCode ? "border-red-500" : ""}
                       />
-                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>}
+                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
                     </div>
                   </div>
                 </CardContent>
@@ -217,7 +231,7 @@ function OrderContent() {
               {/* Payment Method */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
+                  <CardTitle>{t("order.paymentMethod")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -228,7 +242,7 @@ function OrderContent() {
                         checked={formData.paymentMethod === "card"}
                         onChange={() => handleInputChange("paymentMethod", "card")}
                       />
-                      <span>Credit/Debit Card</span>
+                      <span>{t("order.creditCard")}</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -237,48 +251,48 @@ function OrderContent() {
                         checked={formData.paymentMethod === "cash"}
                         onChange={() => handleInputChange("paymentMethod", "cash")}
                       />
-                      <span>Cash on Delivery</span>
+                      <span>{t("order.cashOnDelivery")}</span>
                     </label>
                   </div>
 
                   {formData.paymentMethod === "card" && (
                     <div className="space-y-4 pt-4 border-t">
                       <div>
-                        <Label htmlFor="cardNumber">Card Number</Label>
+                        <Label htmlFor="cardNumber">{t("order.cardNumber")}</Label>
                         <Input
                           id="cardNumber"
-                          placeholder="1234 5678 9012 3456"
+                          placeholder={t("order.cardNumberPlaceholder")}
                           value={formData.cardNumber}
                           onChange={(e) => handleInputChange("cardNumber", e.target.value)}
                           className={errors.cardNumber ? "border-red-500" : ""}
                         />
-                        {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>}
+                        {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="expiryDate">Expiry Date</Label>
+                          <Label htmlFor="expiryDate">{t("order.expiryDate")}</Label>
                           <Input
                             id="expiryDate"
-                            placeholder="MM/YY"
+                            placeholder={t("order.expiryPlaceholder")}
                             value={formData.expiryDate}
                             onChange={(e) => handleInputChange("expiryDate", e.target.value)}
                             className={errors.expiryDate ? "border-red-500" : ""}
                           />
                           {errors.expiryDate && (
-                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate.message}</p>
+                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
                           )}
                         </div>
                         <div>
-                          <Label htmlFor="cvv">CVV</Label>
+                          <Label htmlFor="cvv">{t("order.cvv")}</Label>
                           <Input
                             id="cvv"
-                            placeholder="123"
+                            placeholder={t("order.cvvPlaceholder")}
                             value={formData.cvv}
                             onChange={(e) => handleInputChange("cvv", e.target.value)}
                             className={errors.cvv ? "border-red-500" : ""}
                           />
-                          {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv.message}</p>}
+                          {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
                         </div>
                       </div>
                     </div>
@@ -291,20 +305,20 @@ function OrderContent() {
             <div>
               <Card className="sticky top-24">
                 <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+                  <CardTitle>{t("order.orderSummary")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Spicy Kebab Pizza</span>
+                      <span>{t("food.spicyKebabPizza.name")}</span>
                       <span>$14.99</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Mixed Grill Kebab</span>
+                      <span>{t("food.mixedGrillKebab.name")}</span>
                       <span>$16.99</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Garlic Cheese Bread</span>
+                      <span>{t("food.garlicCheeseBread.name")}</span>
                       <span>$5.99</span>
                     </div>
                   </div>
@@ -313,15 +327,15 @@ function OrderContent() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Subtotal</span>
+                      <span>{t("order.subtotal")}</span>
                       <span>$37.97</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Delivery Fee</span>
+                      <span>{t("order.deliveryFee")}</span>
                       <span>$2.99</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Tax</span>
+                      <span>{t("order.tax")}</span>
                       <span>$3.28</span>
                     </div>
                   </div>
@@ -329,12 +343,12 @@ function OrderContent() {
                   <Separator />
 
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
+                    <span>{t("order.total")}</span>
                     <span>$44.24</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Place Order"}
+                    {isSubmitting ? t("order.processing") : t("order.placeOrder")}
                   </Button>
                 </CardContent>
               </Card>

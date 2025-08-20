@@ -1,32 +1,20 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   // Next.js 15 features
   experimental: {
-    // Enable React 19 features
-    reactCompiler: true,
-    // Enable Turbopack for development
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
-      },
-    },
-    // Enable partial prerendering
-    ppr: true,
-    // Enable server actions
+    // Remove reactCompiler until you install babel-plugin-react-compiler
+    // reactCompiler: true,
+
+    // Remove ppr - only available in canary versions
+    // ppr: true,
+
+    // Server actions configuration
     serverActions: {
       allowedOrigins: ["localhost:3000", "pizzakebab.com"],
     },
   },
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
+
   // Image optimization
   images: {
     remotePatterns: [
@@ -43,17 +31,10 @@ const nextConfig = {
     unoptimized: true,
   },
 
-  // Internationalization
-  i18n: {
-    locales: ["en", "fr", "de"],
-    defaultLocale: "en",
-    localeDetection: true,
-  },
-
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
-  
+
   // Security headers
   async headers() {
     return [
@@ -88,17 +69,25 @@ const nextConfig = {
     ]
   },
 
-  // Bundle analyzer (optional)
-  ...(process.env.ANALYZE === "true" && {
-    webpack: (config) => {
+  // Webpack configuration for custom loaders like SVGR
+  webpack: (config) => {
+    // SVGR configuration
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"],
+    });
+
+    // Bundle analyzer (optional)
+    if (process.env.ANALYZE === "true") {
       config.plugins.push(
         new (require("@next/bundle-analyzer")({
           enabled: true,
         }))()
       )
-      return config
-    },
-  }),
+    }
+
+    return config
+  },
 }
 
 export default nextConfig

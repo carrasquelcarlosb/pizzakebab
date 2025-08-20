@@ -14,25 +14,25 @@ import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
 
-// Sample cart data
-const initialCartItems = [
+// Sample cart data - will be dynamically translated in component
+const initialCartItemsData = [
   {
     id: 101,
-    name: "Spicy Kebab Pizza",
+    nameKey: "food.spicyKebabPizza.name",
     price: 14.99,
     quantity: 1,
     image: "/placeholder.svg?height=100&width=100",
   },
   {
     id: 201,
-    name: "Mixed Grill Kebab",
+    nameKey: "food.mixedGrillKebab.name",
     price: 16.99,
     quantity: 1,
     image: "/placeholder.svg?height=100&width=100",
   },
   {
     id: 401,
-    name: "Garlic Cheese Bread",
+    nameKey: "food.garlicCheeseBread.name",
     price: 5.99,
     quantity: 1,
     image: "/placeholder.svg?height=100&width=100",
@@ -40,8 +40,15 @@ const initialCartItems = [
 ]
 
 function CartContent() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
   const { t } = useLanguage()
+  
+  // Transform cart data with translated names
+  const initialCartItems = initialCartItemsData.map(item => ({
+    ...item,
+    name: t(item.nameKey)
+  }))
+  
+  const [cartItems, setCartItems] = useState(initialCartItems)
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return
