@@ -20,7 +20,7 @@ export function FloatingActionButton() {
     },
     {
       icon: MessageCircle,
-      label: "Chat",
+      label: t("nav.chat"),
       href: "#",
       color: "bg-blue-500 hover:bg-blue-600",
     },

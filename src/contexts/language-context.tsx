@@ -38,15 +38,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         value = (value as { [key: string]: TranslationValue })[k]
       } else {
         // Fallback to English if key not found
-        value = translations.en
+        let fallbackValue: TranslationValue = translations.en
         for (const fallbackKey of keys) {
-          if (value && typeof value === "object" && fallbackKey in value) {
-            value = (value as { [key: string]: TranslationValue })[k]
-
+          if (fallbackValue && typeof fallbackValue === "object" && fallbackKey in fallbackValue) {
+            fallbackValue = (fallbackValue as { [key: string]: TranslationValue })[fallbackKey]
+          } else {
             return key // Return key if not found in fallback
           }
         }
-        break
+        return typeof fallbackValue === "string" ? fallbackValue : key
       }
     }
 

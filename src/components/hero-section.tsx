@@ -113,7 +113,7 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Enhanced Chef's Special Card */}
+          {/* Enhanced Chef&apos;s Special Card */}
           <div className="absolute bottom-8 right-8 md:right-16 bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hidden lg:block transform hover:scale-105 transition-all duration-500 shadow-2xl group">
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-amber-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="flex items-center gap-4 relative z-10">
@@ -127,7 +127,7 @@ export function HeroSection() {
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-3 w-3 text-amber-400 fill-amber-400 mr-0.5" />
                   ))}
-                  <span className="text-white/80 text-xs ml-2">Chef's Choice</span>
+                  <span className="text-white/80 text-xs ml-2">Chef&apos;s Choice</span>
                 </div>
               </div>
             </div>
