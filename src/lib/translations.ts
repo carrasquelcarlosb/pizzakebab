@@ -494,7 +494,7 @@ export const translations = {
       new: "NEU",
       off: "RABATT",
       specialtyPizzas: "Spezialitäten Pizzas",
-      classicPizzas: "Klassische Pizzas",
+      classicPizzas: "Klassische Pizzen",
       vegetarian: "Vegetarisch",
     },
   },
