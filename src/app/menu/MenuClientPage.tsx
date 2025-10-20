@@ -46,6 +46,12 @@ function MenuContent() {
               <TabsTrigger value="sides" className="text-lg py-2 px-4">
                 {t("categories.sides")}
               </TabsTrigger>
+              <TabsTrigger value="drinks" className="text-lg py-2 px-4">
+                {t("categories.drinks")}
+              </TabsTrigger>
+              <TabsTrigger value="desserts" className="text-lg py-2 px-4">
+                {t("categories.desserts")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pizzas">
@@ -75,6 +81,22 @@ function MenuContent() {
             <TabsContent value="sides">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {menuItems.sides.map((item) => (
+                  <InteractiveMenuCard key={item.id} item={item} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="drinks">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {menuItems.drinks.map((item) => (
+                  <InteractiveMenuCard key={item.id} item={item} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="desserts">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {menuItems.desserts.map((item) => (
                   <InteractiveMenuCard key={item.id} item={item} />
                 ))}
               </div>

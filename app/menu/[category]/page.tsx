@@ -1,4 +1,10 @@
 import { notFound } from "next/navigation"
+import { InteractiveMenuCard } from "@/components/interactive-menu-card"
+import { MainNav } from "@/components/main-nav"
+import { MobileNav } from "@/components/mobile-nav"
+import { Footer } from "@/components/footer"
+import { LanguageProvider } from "@/contexts/language-context"
+import { menuCatalog, validMenuCategories } from "@/data/menu-catalog"
 
 import { AppProviders } from "@/contexts/app-providers"
 import { menuCatalog, type MenuCategory } from "@/lib/menu-data"
@@ -10,17 +16,17 @@ type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-const validCategories = Object.keys(menuCatalog) as MenuCategory[]
-
 export default async function CategoryPage(props: Props) {
   const params = await props.params
   await props.searchParams
 
   const categoryParam = params.category as MenuCategory
 
-  if (!validCategories.includes(categoryParam)) {
+  if (!validMenuCategories.includes(category)) {
     notFound()
   }
+
+  const items = menuCatalog[category] || []
 
   return (
     <AppProviders>
@@ -30,7 +36,7 @@ export default async function CategoryPage(props: Props) {
 }
 
 export async function generateStaticParams() {
-  return validCategories.map((category) => ({
+  return validMenuCategories.map((category) => ({
     category,
   }))
 }

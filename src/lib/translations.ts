@@ -105,6 +105,22 @@ export const translations = {
         name: "Spicy Potato Wedges",
         description: "Crispy potato wedges seasoned with spicy herbs",
       },
+      classicCola: {
+        name: "Classic Cola",
+        description: "Refreshing fizzy cola served chilled.",
+      },
+      sparklingWater: {
+        name: "Sparkling Water",
+        description: "Lightly carbonated mineral water with a slice of lemon.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Layers of flaky pastry with nuts and honey syrup.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Classic Italian dessert with mascarpone and espresso-soaked ladyfingers.",
+      },
     },
     // Testimonials
     testimonials: {
@@ -346,6 +362,22 @@ export const translations = {
       spicyPotatoWedges: {
         name: "Quartiers de Pommes de Terre Épicés",
         description: "Quartiers de pommes de terre croustillants assaisonnés aux herbes épicées",
+      },
+      classicCola: {
+        name: "Cola Classique",
+        description: "Cola pétillant rafraîchissant servi bien frais.",
+      },
+      sparklingWater: {
+        name: "Eau Pétillante",
+        description: "Eau minérale légèrement gazeuse avec une tranche de citron.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Couches de pâte feuilletée avec des noix et du sirop de miel.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Dessert italien classique au mascarpone et biscuits imbibés d'espresso.",
       },
     },
     // Testimonials
@@ -589,6 +621,22 @@ export const translations = {
       spicyPotatoWedges: {
         name: "Würzige Kartoffelecken",
         description: "Knusprige Kartoffelecken gewürzt mit würzigen Kräutern",
+      },
+      classicCola: {
+        name: "Klassische Cola",
+        description: "Erfrischende spritzige Cola, gekühlt serviert.",
+      },
+      sparklingWater: {
+        name: "Sprudelwasser",
+        description: "Leicht kohlensäurehaltiges Mineralwasser mit einer Zitronenscheibe.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Schichten aus Blätterteig mit Nüssen und Honigsirup.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Klassisches italienisches Dessert mit Mascarpone und Espresso-getränkten Löffelbiskuits.",
       },
     },
     // Testimonials
