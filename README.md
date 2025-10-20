@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This project is built with [Next.js](https://nextjs.org) and a React 18 runtime. The repository ships with a few experimental
+capabilities that can be toggled on demand for canary builds.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and start the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application is served on [http://localhost:3000](http://localhost:3000). Modify files under `app/` or `src/` to iterate
+locally; changes are hot-reloaded in the browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build & Quality Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run a production build locally to mirror the CI pipeline:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+Optional checks:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `npm run lint` to execute ESLint (lint errors are currently ignored during the build).
+- `npm run type-check` to run TypeScript in `--noEmit` mode.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Experimental feature flags
 
-## Deploy on Vercel
+The default configuration ships without Partial Prerendering (PPR) or the React Compiler to avoid the `CanaryOnlyError`
+encountered on stable Next.js releases. Opt in by providing explicit environment variables at build time:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Flag | When to enable | Notes |
+| --- | --- | --- |
+| `NEXT_ENABLE_REACT_COMPILER` | React 19 runtimes or canary deployments | Requires the [`babel-plugin-react-compiler`](https://www.npmjs.com/package/babel-plugin-react-compiler) and React 19 when enabled. |
+| `NEXT_ENABLE_PPR` | Next.js canary releases with PPR support | Keep disabled on stable 15.0.x to avoid build failures. |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Vercel deployment notes
+
+- **Node.js version**: 18.x LTS (>= 18.17.0) to match the local toolchain.
+- **Environment variables**: define `NEXT_ENABLE_REACT_COMPILER` or `NEXT_ENABLE_PPR` only when the deployment target uses the
+  corresponding canary features.
+- **Build command**: `npm run build` (default for Next.js projects).
+
+These settings keep the production build aligned with the local environment and ensure that experimental features are only
+activated on compatible runtimes.

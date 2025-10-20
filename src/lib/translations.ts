@@ -125,7 +125,7 @@ export const translations = {
     cart: {
       title: "Your Cart",
       empty: "Your cart is empty",
-      emptySubtitle: "Looks like you haven't added anything to your cart yet.",
+      emptySubtitle: "Browse the menu to add a kebab to your order.",
       browseMenu: "Browse Menu",
       orderSummary: "Order Summary",
       subtotal: "Subtotal",
@@ -134,6 +134,78 @@ export const translations = {
       promoCode: "Promo code",
       proceedToCheckout: "Proceed to Checkout",
       continueShopping: "Continue Shopping",
+    },
+    // Order Page
+    orderPage: {
+      title: "Complete Your Order",
+      sections: {
+        fulfillment: "How would you like to get your order?",
+        customerInformation: "Customer Information",
+        deliveryAddress: "Delivery Address",
+        paymentMethod: "Payment Method",
+        summary: "Order Summary",
+      },
+      fulfillment: {
+        delivery: "Delivery",
+        deliveryDescription: "Have your meal brought straight to you.",
+        pickup: "Pickup",
+        pickupDescription: "Grab your order at the counter when it's ready.",
+      },
+      fields: {
+        firstName: "First Name",
+        lastName: "Last Name",
+        email: "Email",
+        phone: "Phone",
+        address: "Street Address",
+        city: "City",
+        zipCode: "ZIP Code",
+        paymentMethod: "Payment Method",
+        cardNumber: "Card Number",
+        expiryDate: "Expiry Date",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Credit/Debit Card",
+        cash: "Cash on Delivery",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/YY",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Fulfillment",
+        subtotal: "Subtotal",
+        deliveryFee: "Delivery Fee",
+        tax: "Tax",
+        total: "Total",
+      },
+      actions: {
+        placeOrder: "Place Order",
+        processing: "Processing...",
+      },
+      empty: {
+        title: "Your cart is empty",
+        subtitle: "Add a few delicious items before completing your order.",
+        cta: "Browse the menu",
+      },
+      notifications: {
+        success: "Order placed successfully!",
+        failure: "Failed to place order. Please try again.",
+      },
+      errors: {
+        firstName: "First name is required",
+        lastName: "Last name is required",
+        email: "Email is required",
+        phone: "Phone number is required",
+        address: "Address is required",
+        city: "City is required",
+        zipCode: "ZIP code is required",
+        paymentMethod: "Payment method is required",
+        cardNumber: "Card number is required",
+        expiryDate: "Expiry date is required",
+        cvv: "CVV is required",
+      },
     },
     // Menu Page
     menuPage: {
@@ -291,7 +363,7 @@ export const translations = {
     cart: {
       title: "Votre Panier",
       empty: "Votre panier est vide",
-      emptySubtitle: "Il semble que vous n'ayez encore rien ajouté à votre panier.",
+      emptySubtitle: "Ajoutez un kebab depuis le menu pour commencer votre commande.",
       browseMenu: "Parcourir le Menu",
       orderSummary: "Résumé de Commande",
       subtotal: "Sous-total",
@@ -300,6 +372,78 @@ export const translations = {
       promoCode: "Code promo",
       proceedToCheckout: "Procéder au Paiement",
       continueShopping: "Continuer les Achats",
+    },
+    // Order Page
+    orderPage: {
+      title: "Finalisez Votre Commande",
+      sections: {
+        fulfillment: "Comment souhaitez-vous récupérer votre commande ?",
+        customerInformation: "Informations Client",
+        deliveryAddress: "Adresse de Livraison",
+        paymentMethod: "Mode de Paiement",
+        summary: "Récapitulatif de Commande",
+      },
+      fulfillment: {
+        delivery: "Livraison",
+        deliveryDescription: "Faites-vous livrer directement chez vous.",
+        pickup: "À emporter",
+        pickupDescription: "Récupérez votre commande au comptoir quand elle est prête.",
+      },
+      fields: {
+        firstName: "Prénom",
+        lastName: "Nom",
+        email: "Email",
+        phone: "Téléphone",
+        address: "Adresse",
+        city: "Ville",
+        zipCode: "Code Postal",
+        paymentMethod: "Mode de Paiement",
+        cardNumber: "Numéro de Carte",
+        expiryDate: "Date d'Expiration",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Carte de Crédit/Débit",
+        cash: "Paiement à la Livraison",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/AA",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Mode de retrait",
+        subtotal: "Sous-total",
+        deliveryFee: "Frais de Livraison",
+        tax: "Taxes",
+        total: "Total",
+      },
+      actions: {
+        placeOrder: "Passer la Commande",
+        processing: "Traitement...",
+      },
+      empty: {
+        title: "Votre panier est vide",
+        subtitle: "Ajoutez quelques délices avant de finaliser votre commande.",
+        cta: "Parcourir le menu",
+      },
+      notifications: {
+        success: "Commande passée avec succès !",
+        failure: "Échec de la commande. Veuillez réessayer.",
+      },
+      errors: {
+        firstName: "Le prénom est requis",
+        lastName: "Le nom est requis",
+        email: "L'email est requis",
+        phone: "Le numéro de téléphone est requis",
+        address: "L'adresse est requise",
+        city: "La ville est requise",
+        zipCode: "Le code postal est requis",
+        paymentMethod: "Le mode de paiement est requis",
+        cardNumber: "Le numéro de carte est requis",
+        expiryDate: "La date d'expiration est requise",
+        cvv: "Le CVV est requis",
+      },
     },
     // Menu Page
     menuPage: {
@@ -458,7 +602,7 @@ export const translations = {
     cart: {
       title: "Ihr Warenkorb",
       empty: "Ihr Warenkorb ist leer",
-      emptySubtitle: "Es sieht so aus, als hätten Sie noch nichts zu Ihrem Warenkorb hinzugefügt.",
+      emptySubtitle: "Fügen Sie über die Speisekarte einen Kebab hinzu, um zu starten.",
       browseMenu: "Menü Durchsuchen",
       orderSummary: "Bestellübersicht",
       subtotal: "Zwischensumme",
@@ -467,6 +611,78 @@ export const translations = {
       promoCode: "Promo-Code",
       proceedToCheckout: "Zur Kasse Gehen",
       continueShopping: "Weiter Einkaufen",
+    },
+    // Order Page
+    orderPage: {
+      title: "Schließen Sie Ihre Bestellung Ab",
+      sections: {
+        fulfillment: "Wie möchten Sie Ihre Bestellung erhalten?",
+        customerInformation: "Kundendaten",
+        deliveryAddress: "Lieferadresse",
+        paymentMethod: "Zahlungsmethode",
+        summary: "Bestellübersicht",
+      },
+      fulfillment: {
+        delivery: "Lieferung",
+        deliveryDescription: "Lassen Sie sich das Essen direkt nach Hause bringen.",
+        pickup: "Abholung",
+        pickupDescription: "Holen Sie Ihre Bestellung ab, sobald sie fertig ist.",
+      },
+      fields: {
+        firstName: "Vorname",
+        lastName: "Nachname",
+        email: "E-Mail",
+        phone: "Telefon",
+        address: "Straße und Hausnummer",
+        city: "Stadt",
+        zipCode: "PLZ",
+        paymentMethod: "Zahlungsmethode",
+        cardNumber: "Kartennummer",
+        expiryDate: "Ablaufdatum",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Kredit-/Debitkarte",
+        cash: "Barzahlung bei Lieferung",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/JJ",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Art der Zustellung",
+        subtotal: "Zwischensumme",
+        deliveryFee: "Liefergebühr",
+        tax: "Steuer",
+        total: "Gesamt",
+      },
+      actions: {
+        placeOrder: "Bestellung Abschicken",
+        processing: "Wird verarbeitet...",
+      },
+      empty: {
+        title: "Ihr Warenkorb ist leer",
+        subtitle: "Fügen Sie ein paar Leckereien hinzu, bevor Sie die Bestellung abschließen.",
+        cta: "Menü ansehen",
+      },
+      notifications: {
+        success: "Bestellung erfolgreich aufgegeben!",
+        failure: "Bestellung fehlgeschlagen. Bitte versuche es erneut.",
+      },
+      errors: {
+        firstName: "Vorname ist erforderlich",
+        lastName: "Nachname ist erforderlich",
+        email: "E-Mail ist erforderlich",
+        phone: "Telefonnummer ist erforderlich",
+        address: "Adresse ist erforderlich",
+        city: "Stadt ist erforderlich",
+        zipCode: "PLZ ist erforderlich",
+        paymentMethod: "Zahlungsmethode ist erforderlich",
+        cardNumber: "Kartennummer ist erforderlich",
+        expiryDate: "Ablaufdatum ist erforderlich",
+        cvv: "CVV ist erforderlich",
+      },
     },
     // Menu Page
     menuPage: {
@@ -494,11 +710,21 @@ export const translations = {
       new: "NEU",
       off: "RABATT",
       specialtyPizzas: "Spezialitäten Pizzas",
-      classicPizzas: "Klassische Pizzas",
+      classicPizzas: "Klassische Pizzen",
       vegetarian: "Vegetarisch",
     },
   },
 } as const
 
+type DotNestedKeys<T> = T extends object
+  ? {
+      [K in Extract<keyof T, string>]: T[K] extends object
+        ? `${K}` | `${K}.${DotNestedKeys<T[K]>}`
+        : `${K}`
+    }[Extract<keyof T, string>]
+  : never
+
 export type Language = keyof typeof translations
-export type TranslationKey = keyof typeof translations.en
+export type TranslationSchema = (typeof translations)[Language]
+export type TranslationKey = DotNestedKeys<TranslationSchema>
+export type FoodKey = keyof TranslationSchema["food"]

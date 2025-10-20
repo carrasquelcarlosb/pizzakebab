@@ -2,7 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import Link from "next/link"
+import { useMemo, useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,385 +13,505 @@ import { Separator } from "@/components/ui/separator"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { LanguageProvider, useLanguage } from "@/contexts/language-context"
-import { DEFAULT_DELIVERY_FEE, DEFAULT_TAX_RATE, sharedCartItems } from "@/lib/cart-data"
+import { useLanguage } from "@/contexts/language-context"
+import { AppProviders } from "@/contexts/app-providers"
+import { useCart } from "@/contexts/cart-context"
+import {
+  formatCurrency,
+  getLocalizedMenuItemById,
+  type LocalizedMenuItem,
+} from "@/lib/menu-data"
+import type { TranslationKey } from "@/lib/translations"
+
+type PaymentMethod = "card" | "cash"
+type FulfillmentMethod = "delivery" | "pickup"
 
 interface OrderForm {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  zipCode: string
-  paymentMethod: string
-  cardNumber?: string
-  expiryDate?: string
-  cvv?: string
-  orderType: "delivery" | "pickup"
-}
+   firstName: string
+   lastName: string
+   email: string
+   phone: string
+   address: string
+   city: string
+   zipCode: string
+   paymentMethod: PaymentMethod | ""
+   cardNumber?: string
+   expiryDate?: string
+   cvv?: string
+ }
+
+interface ResolvedSummaryLine {
+   id: number
+   quantity: number
+   item: LocalizedMenuItem
+ }
+
+type OrderField = keyof OrderForm
+
+const errorTranslationKeys: Record<OrderField, TranslationKey> = {
+   firstName: "orderPage.errors.firstName",
+   lastName: "orderPage.errors.lastName",
+   email: "orderPage.errors.email",
+   phone: "orderPage.errors.phone",
+   address: "orderPage.errors.address",
+   city: "orderPage.errors.city",
+   zipCode: "orderPage.errors.zipCode",
+   paymentMethod: "orderPage.errors.paymentMethod",
+   cardNumber: "orderPage.errors.cardNumber",
+   expiryDate: "orderPage.errors.expiryDate",
+   cvv: "orderPage.errors.cvv",
+ }
+
+const cardSpecificFields: OrderField[] = ["cardNumber", "expiryDate", "cvv"]
 
 function OrderContent() {
-  const { t } = useLanguage()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState<OrderForm>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    zipCode: "",
-    paymentMethod: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    orderType: "delivery",
-  })
-  const [errors, setErrors] = useState<Partial<OrderForm>>({})
+   const { t, language } = useLanguage()
+   const { items, clear } = useCart()
+   const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("delivery")
+   const [isSubmitting, setIsSubmitting] = useState(false)
+   const [formData, setFormData] = useState<OrderForm>({
+     firstName: "",
+     lastName: "",
+     email: "",
+     phone: "",
+     address: "",
+     city: "",
+     zipCode: "",
+     paymentMethod: "",
+     cardNumber: "",
+     expiryDate: "",
+     cvv: "",
+   })
+   const [errors, setErrors] = useState<Partial<Record<OrderField, string>>>({})
 
-  const subtotal = sharedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const deliveryFee = formData.orderType === "delivery" ? DEFAULT_DELIVERY_FEE : 0
-  const tax = Number((subtotal * DEFAULT_TAX_RATE).toFixed(2))
-  const total = subtotal + deliveryFee + tax
+   const summaryItems = useMemo(() => {
+     return items.reduce<ResolvedSummaryLine[]>((accumulator, line) => {
+       const localizedItem = getLocalizedMenuItemById(line.id, t)
+       if (!localizedItem) {
+         return accumulator
+       }
+       accumulator.push({ ...line, item: localizedItem })
+       return accumulator
+     }, [])
+   }, [items, t])
 
-  const handleInputChange = (field: keyof OrderForm, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
-    }
-  }
+   const isCartEmpty = summaryItems.length === 0
+   const isDelivery = fulfillmentMethod === "delivery"
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<OrderForm> = {}
+   const formatPrice = (value: number) => formatCurrency(value, language)
 
-    if (!formData.firstName) newErrors.firstName = "First name is required"
-    if (!formData.lastName) newErrors.lastName = "Last name is required"
-    if (!formData.email) newErrors.email = "Email is required"
-    if (!formData.phone) newErrors.phone = "Phone number is required"
-    if (formData.orderType === "delivery") {
-      if (!formData.address) newErrors.address = "Address is required"
-      if (!formData.city) newErrors.city = "City is required"
-      if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
-    }
-    if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
+   const summarySubtotal = summaryItems.reduce(
+     (sum, line) => sum + line.item.price * line.quantity,
+     0,
+   )
+   const deliveryFee = isDelivery ? 2.99 : 0
+   const taxRate = 0.08
+   const tax = summarySubtotal * taxRate
+   const orderTotal = summarySubtotal + deliveryFee + tax
 
-    if (formData.paymentMethod === "card") {
-      if (!formData.cardNumber) newErrors.cardNumber = "Card number is required"
-      if (!formData.expiryDate) newErrors.expiryDate = "Expiry date is required"
-      if (!formData.cvv) newErrors.cvv = "CVV is required"
-    }
+   const handleInputChange = (field: OrderField, value: string) => {
+     setFormData((previous) => ({ ...previous, [field]: value }))
+     if (errors[field]) {
+       setErrors((previous) => ({ ...previous, [field]: undefined }))
+     }
+   }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+   const isEmpty = (value: string | PaymentMethod | undefined | "") => {
+     if (value === undefined) return true
+     return String(value).trim().length === 0
+   }
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+   const validateForm = (): boolean => {
+     const newErrors: Partial<Record<OrderField, string>> = {}
 
-    if (!validateForm()) return
+     const requiredFields: OrderField[] = [
+       "firstName",
+       "lastName",
+       "email",
+       "phone",
+       "paymentMethod",
+     ]
 
-    setIsSubmitting(true)
+     if (isDelivery) {
+       requiredFields.push("address", "city", "zipCode")
+     }
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+     for (const field of requiredFields) {
+       if (isEmpty(formData[field])) {
+         newErrors[field] = t(errorTranslationKeys[field])
+       }
+     }
 
-      // In a real app, you would process the order here
-      console.log("Order submitted:", formData)
+     if (formData.paymentMethod === "card") {
+       for (const field of cardSpecificFields) {
+         if (isEmpty(formData[field])) {
+           newErrors[field] = t(errorTranslationKeys[field])
+         }
+       }
+     }
 
-      // Redirect to success page or show success message
-      alert("Order placed successfully!")
-    } catch (error) {
-      console.error("Order submission failed:", error)
-      alert("Failed to place order. Please try again.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+     setErrors(newErrors)
+     return Object.keys(newErrors).length === 0
+   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 w-full border-b bg-background">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="hidden md:flex">
-            <MainNav />
-          </div>
-          <div className="md:hidden">
-            <MobileNav />
-          </div>
-        </div>
-      </header>
+   const onSubmit = async (event: React.FormEvent) => {
+     event.preventDefault()
 
-      <main className="flex-1">
-        <div className="container py-8">
-          <h1 className="text-3xl font-bold mb-8">Complete Your Order</h1>
+     if (isCartEmpty) {
+       return
+     }
 
-          <form onSubmit={(e) => onSubmit(e)} className="grid md:grid-cols-2 gap-8">
-            {/* Customer Information */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        className={errors.firstName ? "border-red-500" : ""}
-                      />
-                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        className={errors.lastName ? "border-red-500" : ""}
-                      />
-                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
-                    </div>
-                  </div>
+     if (!validateForm()) {
+       return
+     }
 
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className={errors.email ? "border-red-500" : ""}
-                    />
-                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-                  </div>
+     setIsSubmitting(true)
 
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      className={errors.phone ? "border-red-500" : ""}
-                    />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
-                  </div>
-                </CardContent>
-              </Card>
+     try {
+       await new Promise((resolve) => setTimeout(resolve, 2000))
+       console.log("Order submitted:", { formData, fulfillmentMethod, items })
+       clear()
+       setFormData({
+         firstName: "",
+         lastName: "",
+         email: "",
+         phone: "",
+         address: "",
+         city: "",
+         zipCode: "",
+         paymentMethod: "",
+         cardNumber: "",
+         expiryDate: "",
+         cvv: "",
+       })
+       setFulfillmentMethod("delivery")
+       window.alert(t("orderPage.notifications.success"))
+     } catch (error) {
+       console.error("Order submission failed:", error)
+       window.alert(t("orderPage.notifications.failure"))
+     } finally {
+       setIsSubmitting(false)
+     }
+   }
 
-              {/* Order Type */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Type</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="delivery"
-                        checked={formData.orderType === "delivery"}
-                        onChange={() => handleInputChange("orderType", "delivery")}
-                      />
-                      <span>Livraison</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="pickup"
-                        checked={formData.orderType === "pickup"}
-                        onChange={() => handleInputChange("orderType", "pickup")}
-                      />
-                      <span>À emporter</span>
-                    </label>
-                  </div>
-                </CardContent>
-              </Card>
+   return (
+     <div className="flex min-h-screen flex-col">
+       <header className="sticky top-0 z-50 w-full border-b bg-background">
+         <div className="container flex h-16 items-center justify-between">
+           <div className="hidden md:flex">
+             <MainNav />
+           </div>
+           <div className="md:hidden">
+             <MobileNav />
+           </div>
+         </div>
+       </header>
 
-              {/* Delivery Address */}
-              {formData.orderType === "delivery" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Delivery Address</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="address">Street Address</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => handleInputChange("address", e.target.value)}
-                        className={errors.address ? "border-red-500" : ""}
-                      />
-                      {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
-                    </div>
+       <main className="flex-1">
+         <div className="container py-8">
+           <h1 className="text-3xl font-bold mb-8">{t("orderPage.title")}</h1>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="city">City</Label>
-                        <Input
-                          id="city"
-                          value={formData.city}
-                          onChange={(e) => handleInputChange("city", e.target.value)}
-                          className={errors.city ? "border-red-500" : ""}
-                        />
-                        {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
-                      </div>
-                      <div>
-                        <Label htmlFor="zipCode">ZIP Code</Label>
-                        <Input
-                          id="zipCode"
-                          value={formData.zipCode}
-                          onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                          className={errors.zipCode ? "border-red-500" : ""}
-                        />
-                        {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+           {isCartEmpty ? (
+             <Card className="max-w-xl mx-auto">
+               <CardHeader>
+                 <CardTitle>{t("orderPage.empty.title")}</CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 <p className="text-muted-foreground">{t("orderPage.empty.subtitle")}</p>
+                 <Button asChild className="bg-red-600 hover:bg-red-700">
+                   <Link href="/menu">{t("orderPage.empty.cta")}</Link>
+                 </Button>
+               </CardContent>
+             </Card>
+           ) : (
+             <form onSubmit={onSubmit} className="grid md:grid-cols-2 gap-8">
+               <div className="space-y-6">
+                 <Card>
+                   <CardHeader>
+                     <CardTitle>{t("orderPage.sections.fulfillment")}</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <Button
+                         type="button"
+                         variant={isDelivery ? "default" : "outline"}
+                         className="h-auto py-4 flex-col items-start text-left"
+                         onClick={() => setFulfillmentMethod("delivery")}
+                       >
+                         <span className="font-semibold">{t("orderPage.fulfillment.delivery")}</span>
+                         <span className="text-sm text-muted-foreground">
+                           {t("orderPage.fulfillment.deliveryDescription")}
+                         </span>
+                       </Button>
+                       <Button
+                         type="button"
+                         variant={!isDelivery ? "default" : "outline"}
+                         className="h-auto py-4 flex-col items-start text-left"
+                         onClick={() => setFulfillmentMethod("pickup")}
+                       >
+                         <span className="font-semibold">{t("orderPage.fulfillment.pickup")}</span>
+                         <span className="text-sm text-muted-foreground">
+                           {t("orderPage.fulfillment.pickupDescription")}
+                         </span>
+                       </Button>
+                     </div>
+                   </CardContent>
+                 </Card>
 
-              {/* Payment Method */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="card"
-                        checked={formData.paymentMethod === "card"}
-                        onChange={() => handleInputChange("paymentMethod", "card")}
-                      />
-                      <span>Credit/Debit Card</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        value="cash"
-                        checked={formData.paymentMethod === "cash"}
-                        onChange={() => handleInputChange("paymentMethod", "cash")}
-                      />
-                      <span>Cash on Delivery</span>
-                    </label>
-                  </div>
+                 <Card>
+                   <CardHeader>
+                     <CardTitle>{t("orderPage.sections.customerInformation")}</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="grid grid-cols-2 gap-4">
+                       <div>
+                         <Label htmlFor="firstName">{t("orderPage.fields.firstName")}</Label>
+                         <Input
+                           id="firstName"
+                           value={formData.firstName}
+                           onChange={(event) => handleInputChange("firstName", event.target.value)}
+                           className={errors.firstName ? "border-red-500" : ""}
+                         />
+                         {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                       </div>
+                       <div>
+                         <Label htmlFor="lastName">{t("orderPage.fields.lastName")}</Label>
+                         <Input
+                           id="lastName"
+                           value={formData.lastName}
+                           onChange={(event) => handleInputChange("lastName", event.target.value)}
+                           className={errors.lastName ? "border-red-500" : ""}
+                         />
+                         {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                       </div>
+                     </div>
 
-                  {formData.paymentMethod === "card" && (
-                    <div className="space-y-4 pt-4 border-t">
-                      <div>
-                        <Label htmlFor="cardNumber">Card Number</Label>
-                        <Input
-                          id="cardNumber"
-                          placeholder="1234 5678 9012 3456"
-                          value={formData.cardNumber}
-                          onChange={(e) => handleInputChange("cardNumber", e.target.value)}
-                          className={errors.cardNumber ? "border-red-500" : ""}
-                        />
-                        {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>}
-                      </div>
+                     <div>
+                       <Label htmlFor="email">{t("orderPage.fields.email")}</Label>
+                       <Input
+                         id="email"
+                         type="email"
+                         value={formData.email}
+                         onChange={(event) => handleInputChange("email", event.target.value)}
+                         className={errors.email ? "border-red-500" : ""}
+                       />
+                       {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                     </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="expiryDate">Expiry Date</Label>
-                          <Input
-                            id="expiryDate"
-                            placeholder="MM/YY"
-                            value={formData.expiryDate}
-                            onChange={(e) => handleInputChange("expiryDate", e.target.value)}
-                            className={errors.expiryDate ? "border-red-500" : ""}
-                          />
-                          {errors.expiryDate && (
-                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate.message}</p>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="cvv">CVV</Label>
-                          <Input
-                            id="cvv"
-                            placeholder="123"
-                            value={formData.cvv}
-                            onChange={(e) => handleInputChange("cvv", e.target.value)}
-                            className={errors.cvv ? "border-red-500" : ""}
-                          />
-                          {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv.message}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                     <div>
+                       <Label htmlFor="phone">{t("orderPage.fields.phone")}</Label>
+                       <Input
+                         id="phone"
+                         value={formData.phone}
+                         onChange={(event) => handleInputChange("phone", event.target.value)}
+                         className={errors.phone ? "border-red-500" : ""}
+                       />
+                       {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                     </div>
+                   </CardContent>
+                 </Card>
 
-            {/* Order Summary */}
-            <div>
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    {sharedCartItems.map((item) => (
-                      <div key={item.id} className="flex justify-between">
-                        <span>
-                          {item.name}
-                          {item.quantity > 1 ? ` × ${item.quantity}` : ""}
-                        </span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
+                 {isDelivery && (
+                   <Card>
+                     <CardHeader>
+                       <CardTitle>{t("orderPage.sections.deliveryAddress")}</CardTitle>
+                     </CardHeader>
+                     <CardContent className="space-y-4">
+                       <div>
+                         <Label htmlFor="address">{t("orderPage.fields.address")}</Label>
+                         <Input
+                           id="address"
+                           value={formData.address}
+                           onChange={(event) => handleInputChange("address", event.target.value)}
+                           className={errors.address ? "border-red-500" : ""}
+                         />
+                         {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                       </div>
 
-                  <Separator />
+                       <div className="grid grid-cols-2 gap-4">
+                         <div>
+                           <Label htmlFor="city">{t("orderPage.fields.city")}</Label>
+                           <Input
+                             id="city"
+                             value={formData.city}
+                             onChange={(event) => handleInputChange("city", event.target.value)}
+                             className={errors.city ? "border-red-500" : ""}
+                           />
+                           {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+                         </div>
+                         <div>
+                           <Label htmlFor="zipCode">{t("orderPage.fields.zipCode")}</Label>
+                           <Input
+                             id="zipCode"
+                             value={formData.zipCode}
+                             onChange={(event) => handleInputChange("zipCode", event.target.value)}
+                             className={errors.zipCode ? "border-red-500" : ""}
+                           />
+                           {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 )}
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Delivery Fee</span>
-                      <span>${deliveryFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Tax</span>
-                      <span>${tax.toFixed(2)}</span>
-                    </div>
-                  </div>
+                 <Card>
+                   <CardHeader>
+                     <CardTitle>{t("orderPage.sections.paymentMethod")}</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                       <label className="flex items-center space-x-2">
+                         <input
+                           type="radio"
+                           value="card"
+                           checked={formData.paymentMethod === "card"}
+                           onChange={() => handleInputChange("paymentMethod", "card")}
+                         />
+                         <span>{t("orderPage.paymentMethods.card")}</span>
+                       </label>
+                       <label className="flex items-center space-x-2">
+                         <input
+                           type="radio"
+                           value="cash"
+                           checked={formData.paymentMethod === "cash"}
+                           onChange={() => handleInputChange("paymentMethod", "cash")}
+                         />
+                         <span>{t("orderPage.paymentMethods.cash")}</span>
+                       </label>
+                     </div>
 
-                  <Separator />
+                     {errors.paymentMethod && (
+                       <p className="text-red-500 text-sm">{errors.paymentMethod}</p>
+                     )}
 
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
-                  </div>
+                     {formData.paymentMethod === "card" && (
+                       <div className="space-y-4 pt-4 border-t">
+                         <div>
+                           <Label htmlFor="cardNumber">{t("orderPage.fields.cardNumber")}</Label>
+                           <Input
+                             id="cardNumber"
+                             placeholder={t("orderPage.placeholders.cardNumber")}
+                             value={formData.cardNumber}
+                             onChange={(event) => handleInputChange("cardNumber", event.target.value)}
+                             className={errors.cardNumber ? "border-red-500" : ""}
+                           />
+                           {errors.cardNumber && (
+                             <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>
+                           )}
+                         </div>
 
-                  <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Place Order"}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </form>
-        </div>
-      </main>
+                         <div className="grid grid-cols-2 gap-4">
+                           <div>
+                             <Label htmlFor="expiryDate">{t("orderPage.fields.expiryDate")}</Label>
+                             <Input
+                               id="expiryDate"
+                               placeholder={t("orderPage.placeholders.expiryDate")}
+                               value={formData.expiryDate}
+                               onChange={(event) => handleInputChange("expiryDate", event.target.value)}
+                               className={errors.expiryDate ? "border-red-500" : ""}
+                             />
+                             {errors.expiryDate && (
+                               <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
+                             )}
+                           </div>
+                           <div>
+                             <Label htmlFor="cvv">{t("orderPage.fields.cvv")}</Label>
+                             <Input
+                               id="cvv"
+                               placeholder={t("orderPage.placeholders.cvv")}
+                               value={formData.cvv}
+                               onChange={(event) => handleInputChange("cvv", event.target.value)}
+                               className={errors.cvv ? "border-red-500" : ""}
+                             />
+                             {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
+                           </div>
+                         </div>
+                       </div>
+                     )}
+                   </CardContent>
+                 </Card>
+               </div>
 
-      <Footer />
-    </div>
-  )
-}
+               <div>
+                 <Card className="sticky top-24">
+                   <CardHeader>
+                     <CardTitle>{t("orderPage.sections.summary")}</CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                       {summaryItems.map(({ id, item, quantity }) => {
+                         const lineTotal = item.price * quantity
+                         return (
+                           <div className="flex justify-between" key={id}>
+                             <span>
+                               {item.name} × {quantity}
+                             </span>
+                             <span>{formatPrice(lineTotal)}</span>
+                           </div>
+                         )
+                       })}
+                     </div>
 
-export default function OrderClientPage() {
-  return (
-    <LanguageProvider>
-      <OrderContent />
-    </LanguageProvider>
-  )
-}
+                     <Separator />
+
+                     <div className="space-y-2 text-sm text-muted-foreground">
+                       <div className="flex justify-between">
+                         <span>{t("orderPage.summary.fulfillment")}</span>
+                         <span>
+                           {t(
+                             fulfillmentMethod === "delivery"
+                               ? "orderPage.fulfillment.delivery"
+                               : "orderPage.fulfillment.pickup",
+                           )}
+                         </span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span>{t("orderPage.summary.subtotal")}</span>
+                         <span>{formatPrice(summarySubtotal)}</span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span>{t("orderPage.summary.deliveryFee")}</span>
+                         <span>{formatPrice(deliveryFee)}</span>
+                       </div>
+                       <div className="flex justify-between">
+                         <span>{t("orderPage.summary.tax")}</span>
+                         <span>{formatPrice(tax)}</span>
+                       </div>
+                     </div>
+
+                     <Separator />
+
+                     <div className="flex justify-between font-bold text-lg">
+                       <span>{t("orderPage.summary.total")}</span>
+                       <span>{formatPrice(orderTotal)}</span>
+                     </div>
+
+                     <Button
+                       type="submit"
+                       className="w-full bg-red-600 hover:bg-red-700 mt-6"
+                       disabled={isSubmitting}
+                     >
+                       {isSubmitting
+                         ? t("orderPage.actions.processing")
+                         : t("orderPage.actions.placeOrder")}
+                     </Button>
+                   </CardContent>
+                 </Card>
+               </div>
+             </form>
+           )}
+         </div>
+       </main>
+
+       <Footer />
+     </div>
+   )
+ }
+
+ export default function OrderClientPage() {
+   return (
+     <AppProviders>
+       <OrderContent />
+     </AppProviders>
+   )
+ }
