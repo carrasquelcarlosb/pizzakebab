@@ -6,6 +6,7 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { CartProvider } from "@/contexts/cart-context"
 
 function MenuContent() {
   const { t } = useLanguage()
@@ -207,7 +208,9 @@ function MenuContent() {
 export default function MenuPageClient() {
   return (
     <LanguageProvider>
-      <MenuContent />
+      <CartProvider>
+        <MenuContent />
+      </CartProvider>
     </LanguageProvider>
   )
 }

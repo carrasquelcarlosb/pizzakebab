@@ -163,6 +163,10 @@ export const translations = {
       specialtyPizzas: "Specialty Pizzas",
       classicPizzas: "Classic Pizzas",
       vegetarian: "Vegetarian",
+      addToCart: "Add to Cart",
+      updateCart: "Update Cart",
+      added: "Added",
+      inCart: "In Cart",
     },
   },
   fr: {
@@ -329,6 +333,10 @@ export const translations = {
       specialtyPizzas: "Pizzas Spécialité",
       classicPizzas: "Pizzas Classiques",
       vegetarian: "Végétarien",
+      addToCart: "Ajouter au panier",
+      updateCart: "Mettre à jour",
+      added: "Ajouté",
+      inCart: "Dans le panier",
     },
   },
   de: {
@@ -496,6 +504,10 @@ export const translations = {
       specialtyPizzas: "Spezialitäten Pizzas",
       classicPizzas: "Klassische Pizzas",
       vegetarian: "Vegetarisch",
+      addToCart: "In den Warenkorb",
+      updateCart: "Aktualisieren",
+      added: "Hinzugefügt",
+      inCart: "Im Warenkorb",
     },
   },
 } as const
