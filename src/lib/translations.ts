@@ -125,7 +125,7 @@ export const translations = {
     cart: {
       title: "Your Cart",
       empty: "Your cart is empty",
-      emptySubtitle: "Looks like you haven't added anything to your cart yet.",
+      emptySubtitle: "Browse the menu to add a kebab to your order.",
       browseMenu: "Browse Menu",
       orderSummary: "Order Summary",
       subtotal: "Subtotal",
@@ -363,7 +363,7 @@ export const translations = {
     cart: {
       title: "Votre Panier",
       empty: "Votre panier est vide",
-      emptySubtitle: "Il semble que vous n'ayez encore rien ajouté à votre panier.",
+      emptySubtitle: "Ajoutez un kebab depuis le menu pour commencer votre commande.",
       browseMenu: "Parcourir le Menu",
       orderSummary: "Résumé de Commande",
       subtotal: "Sous-total",
@@ -602,7 +602,7 @@ export const translations = {
     cart: {
       title: "Ihr Warenkorb",
       empty: "Ihr Warenkorb ist leer",
-      emptySubtitle: "Es sieht so aus, als hätten Sie noch nichts zu Ihrem Warenkorb hinzugefügt.",
+      emptySubtitle: "Fügen Sie über die Speisekarte einen Kebab hinzu, um zu starten.",
       browseMenu: "Menü Durchsuchen",
       orderSummary: "Bestellübersicht",
       subtotal: "Zwischensumme",
