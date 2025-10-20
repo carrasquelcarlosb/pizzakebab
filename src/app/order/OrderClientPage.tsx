@@ -12,6 +12,7 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { DEFAULT_DELIVERY_FEE, DEFAULT_TAX_RATE, sharedCartItems } from "@/lib/cart-data"
 
 interface OrderForm {
   firstName: string
@@ -25,6 +26,7 @@ interface OrderForm {
   cardNumber?: string
   expiryDate?: string
   cvv?: string
+  orderType: "delivery" | "pickup"
 }
 
 function OrderContent() {
@@ -42,8 +44,14 @@ function OrderContent() {
     cardNumber: "",
     expiryDate: "",
     cvv: "",
+    orderType: "delivery",
   })
   const [errors, setErrors] = useState<Partial<OrderForm>>({})
+
+  const subtotal = sharedCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const deliveryFee = formData.orderType === "delivery" ? DEFAULT_DELIVERY_FEE : 0
+  const tax = Number((subtotal * DEFAULT_TAX_RATE).toFixed(2))
+  const total = subtotal + deliveryFee + tax
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -60,9 +68,11 @@ function OrderContent() {
     if (!formData.lastName) newErrors.lastName = "Last name is required"
     if (!formData.email) newErrors.email = "Email is required"
     if (!formData.phone) newErrors.phone = "Phone number is required"
-    if (!formData.address) newErrors.address = "Address is required"
-    if (!formData.city) newErrors.city = "City is required"
-    if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
+    if (formData.orderType === "delivery") {
+      if (!formData.address) newErrors.address = "Address is required"
+      if (!formData.city) newErrors.city = "City is required"
+      if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
+    }
     if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
 
     if (formData.paymentMethod === "card") {
@@ -172,47 +182,78 @@ function OrderContent() {
                 </CardContent>
               </Card>
 
-              {/* Delivery Address */}
+              {/* Order Type */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Delivery Address</CardTitle>
+                  <CardTitle>Order Type</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="address">Street Address</Label>
-                    <Input
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
-                      className={errors.address ? "border-red-500" : ""}
-                    />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
-                        className={errors.city ? "border-red-500" : ""}
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="delivery"
+                        checked={formData.orderType === "delivery"}
+                        onChange={() => handleInputChange("orderType", "delivery")}
                       />
-                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
-                    </div>
-                    <div>
-                      <Label htmlFor="zipCode">ZIP Code</Label>
-                      <Input
-                        id="zipCode"
-                        value={formData.zipCode}
-                        onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                        className={errors.zipCode ? "border-red-500" : ""}
+                      <span>Livraison</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="pickup"
+                        checked={formData.orderType === "pickup"}
+                        onChange={() => handleInputChange("orderType", "pickup")}
                       />
-                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>}
-                    </div>
+                      <span>À emporter</span>
+                    </label>
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Delivery Address */}
+              {formData.orderType === "delivery" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Delivery Address</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="address">Street Address</Label>
+                      <Input
+                        id="address"
+                        value={formData.address}
+                        onChange={(e) => handleInputChange("address", e.target.value)}
+                        className={errors.address ? "border-red-500" : ""}
+                      />
+                      {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="city">City</Label>
+                        <Input
+                          id="city"
+                          value={formData.city}
+                          onChange={(e) => handleInputChange("city", e.target.value)}
+                          className={errors.city ? "border-red-500" : ""}
+                        />
+                        {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="zipCode">ZIP Code</Label>
+                        <Input
+                          id="zipCode"
+                          value={formData.zipCode}
+                          onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                          className={errors.zipCode ? "border-red-500" : ""}
+                        />
+                        {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Payment Method */}
               <Card>
@@ -295,18 +336,15 @@ function OrderContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Spicy Kebab Pizza</span>
-                      <span>$14.99</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Mixed Grill Kebab</span>
-                      <span>$16.99</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Garlic Cheese Bread</span>
-                      <span>$5.99</span>
-                    </div>
+                    {sharedCartItems.map((item) => (
+                      <div key={item.id} className="flex justify-between">
+                        <span>
+                          {item.name}
+                          {item.quantity > 1 ? ` × ${item.quantity}` : ""}
+                        </span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
 
                   <Separator />
@@ -314,15 +352,15 @@ function OrderContent() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>$37.97</span>
+                      <span>${subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery Fee</span>
-                      <span>$2.99</span>
+                      <span>${deliveryFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax</span>
-                      <span>$3.28</span>
+                      <span>${tax.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -330,7 +368,7 @@ function OrderContent() {
 
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>$44.24</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>

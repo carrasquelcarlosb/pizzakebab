@@ -13,34 +13,10 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
-
-// Sample cart data
-const initialCartItems = [
-  {
-    id: 101,
-    name: "Spicy Kebab Pizza",
-    price: 14.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 201,
-    name: "Mixed Grill Kebab",
-    price: 16.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 401,
-    name: "Garlic Cheese Bread",
-    price: 5.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-]
+import { DEFAULT_DELIVERY_FEE, sharedCartItems } from "@/lib/cart-data"
 
 function CartContent() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
+  const [cartItems, setCartItems] = useState(sharedCartItems)
   const { t } = useLanguage()
 
   const updateQuantity = (id: number, newQuantity: number) => {
@@ -54,7 +30,7 @@ function CartContent() {
   }
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const deliveryFee = 2.99
+  const deliveryFee = DEFAULT_DELIVERY_FEE
   const total = subtotal + deliveryFee
 
   return (
