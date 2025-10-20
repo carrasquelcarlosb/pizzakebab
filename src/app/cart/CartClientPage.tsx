@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Minus, Plus, Trash2 } from "lucide-react"
@@ -13,49 +12,11 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
-
-// Sample cart data
-const initialCartItems = [
-  {
-    id: 101,
-    name: "Spicy Kebab Pizza",
-    price: 14.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 201,
-    name: "Mixed Grill Kebab",
-    price: 16.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 401,
-    name: "Garlic Cheese Bread",
-    price: 5.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-]
+import { CartProvider, useCart } from "@/contexts/cart-context"
 
 function CartContent() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
+  const { items, subtotal, deliveryFee, total, increaseQuantity, decreaseQuantity, removeItem } = useCart()
   const { t } = useLanguage()
-
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity < 1) return
-
-    setCartItems(cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
-  }
-
-  const removeItem = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
-  }
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const deliveryFee = 2.99
-  const total = subtotal + deliveryFee
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -73,7 +34,7 @@ function CartContent() {
         <div className="container py-8">
           <h1 className="text-3xl font-bold mb-8">{t("cart.title")}</h1>
 
-          {cartItems.length === 0 ? (
+          {items.length === 0 ? (
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold mb-4">{t("cart.empty")}</h2>
               <p className="text-muted-foreground mb-6">{t("cart.emptySubtitle")}</p>
@@ -84,7 +45,7 @@ function CartContent() {
           ) : (
             <div className="grid md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-4">
-                {cartItems.map((item) => (
+                {items.map((item) => (
                   <Card key={item.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
@@ -100,7 +61,7 @@ function CartContent() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => decreaseQuantity(item.id)}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
@@ -109,7 +70,7 @@ function CartContent() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => increaseQuantity(item.id)}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -177,7 +138,9 @@ function CartContent() {
 export default function CartPageClient() {
   return (
     <LanguageProvider>
-      <CartContent />
+      <CartProvider>
+        <CartContent />
+      </CartProvider>
     </LanguageProvider>
   )
 }
