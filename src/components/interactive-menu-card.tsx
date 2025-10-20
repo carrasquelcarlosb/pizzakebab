@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { ShoppingCart, Star, Heart, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -32,31 +33,30 @@ interface InteractiveMenuCardProps {
 export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  const [quantity, setQuantity] = useState(1)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { t } = useLanguage()
-  const { addItem, getItemQuantity, lastAddedItemId } = useCart()
+  const { t, language } = useLanguage()
+  const { addItem, getItemQuantity } = useCart()
+  const currentCartQuantity = getItemQuantity(item.id)
+  const [quantity, setQuantity] = useState(() => Math.max(1, currentCartQuantity))
+
+  useEffect(() => {
+    if (currentCartQuantity > 0) {
+      setQuantity(currentCartQuantity)
+    }
+  }, [currentCartQuantity])
 
   const discountedPrice = item.discount
     ? item.price - (item.price * item.discount) / 100
     : item.price
-  const displayPrice = discountedPrice.toFixed(2)
-  const quantityInCart = getItemQuantity(item.id)
-  const isInCart = quantityInCart > 0
-  const isRecentlyAdded = lastAddedItemId === item.id
+  const formattedPrice = formatCurrency(discountedPrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : undefined
 
   const handleAddToCart = () => {
-    addItem(
-      {
-        id: item.id,
-        name: item.name,
-        price: Number(displayPrice),
-        image: item.image,
-        category: item.category,
-      },
-      quantity,
-    )
-    setQuantity(1)
+    addItem(item.id, quantity)
+    setIsAdding(true)
+    setTimeout(() => setIsAdding(false), 1500)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -202,9 +202,9 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
 
       <CardFooter className="flex justify-between items-center pt-0 pb-6 px-6">
         <div className="font-bold text-xl">
-          <span className="text-red-600 text-2xl">${displayPrice}</span>
-          {item.discount && (
-            <span className="text-sm text-muted-foreground line-through ml-2">${item.price.toFixed(2)}</span>
+          <span className="text-red-600 text-2xl">{formattedPrice}</span>
+          {formattedOriginalPrice && (
+            <span className="text-sm text-muted-foreground line-through ml-2">{formattedOriginalPrice}</span>
           )}
         </div>
 

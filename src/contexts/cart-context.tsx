@@ -10,128 +10,106 @@ import {
   type ReactNode,
 } from "react"
 
-const STORAGE_KEY = "pizzakebab.cart.v1"
-
 export interface CartItem {
   id: number
-  name: string
-  price: number
   quantity: number
-  image?: string
-  category?: string
 }
 
 interface CartContextValue {
   items: CartItem[]
-  totalItems: number
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void
-  updateQuantity: (id: number, quantity: number) => void
+  addItem: (id: number, quantity?: number) => void
+  updateItemQuantity: (id: number, quantity: number) => void
   removeItem: (id: number) => void
-  clearCart: () => void
+  clear: () => void
   getItemQuantity: (id: number) => number
-  lastAddedItemId: number | null
+  totalItems: number
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
+const STORAGE_KEY = "pizzakebab-cart-items"
+
+type CartDraft = Record<number, CartItem>
+
+const toDraft = (items: CartItem[]): CartDraft => {
+  return items.reduce<CartDraft>((draft, line) => {
+    draft[line.id] = line
+    return draft
+  }, {})
+}
+
+const fromDraft = (draft: CartDraft | undefined | null): CartItem[] => {
+  if (!draft) return []
+  return Object.values(draft)
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
-  const [lastAddedItemId, setLastAddedItemId] = useState<number | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
 
   useEffect(() => {
-    if (typeof window === "undefined") return
-
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed: CartItem[] = JSON.parse(stored)
-        if (Array.isArray(parsed)) {
-          setItems(parsed)
-        }
-      }
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as CartDraft
+      setItems(fromDraft(parsed))
     } catch (error) {
-      console.warn("Failed to restore cart from storage", error)
-    } finally {
-      setIsHydrated(true)
+      console.warn("Unable to read cart from storage", error)
     }
   }, [])
 
   useEffect(() => {
-    if (!isHydrated || typeof window === "undefined") return
-
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+      const draft = toDraft(items)
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
     } catch (error) {
-      console.warn("Failed to persist cart to storage", error)
+      console.warn("Unable to persist cart", error)
     }
-  }, [items, isHydrated])
+  }, [items])
 
-  useEffect(() => {
-    if (lastAddedItemId === null) return
+  const addItem = useCallback((id: number, quantity = 1) => {
+    setItems((previous) => {
+      const draft = toDraft(previous)
+      const existing = draft[id]
+      const nextQuantity = Math.max(1, (existing?.quantity ?? 0) + quantity)
+      draft[id] = { id, quantity: nextQuantity }
+      return fromDraft(draft)
+    })
+  }, [])
 
-    const timer = window.setTimeout(() => setLastAddedItemId(null), 2000)
-    return () => window.clearTimeout(timer)
-  }, [lastAddedItemId])
-
-  const addItem = useCallback(
-    (item: Omit<CartItem, "quantity">, quantity = 1) => {
-      setItems((currentItems) => {
-        const existingItem = currentItems.find((cartItem) => cartItem.id === item.id)
-
-        if (existingItem) {
-          return currentItems.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: cartItem.quantity + quantity }
-              : cartItem,
-          )
-        }
-
-        return [...currentItems, { ...item, quantity }]
-      })
-      setLastAddedItemId(item.id)
-    },
-    [],
-  )
-
-  const updateQuantity = useCallback((id: number, quantity: number) => {
-    setItems((currentItems) =>
-      currentItems
-        .map((item) => (item.id === id ? { ...item, quantity } : item))
-        .filter((item) => item.quantity > 0),
-    )
+  const updateItemQuantity = useCallback((id: number, quantity: number) => {
+    if (quantity < 1) {
+      setItems((previous) => previous.filter((line) => line.id !== id))
+      return
+    }
+    setItems((previous) => {
+      const draft = toDraft(previous)
+      if (!draft[id]) return previous
+      draft[id] = { id, quantity }
+      return fromDraft(draft)
+    })
   }, [])
 
   const removeItem = useCallback((id: number) => {
-    setItems((currentItems) => currentItems.filter((item) => item.id !== id))
+    setItems((previous) => previous.filter((line) => line.id !== id))
   }, [])
 
-  const clearCart = useCallback(() => {
+  const clear = useCallback(() => {
     setItems([])
   }, [])
 
   const getItemQuantity = useCallback(
-    (id: number) => items.find((item) => item.id === id)?.quantity ?? 0,
+    (id: number) => {
+      const match = items.find((line) => line.id === id)
+      return match?.quantity ?? 0
+    },
     [items],
   )
 
-  const totalItems = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
-    [items],
-  )
+  const totalItems = useMemo(() => items.reduce((sum, line) => sum + line.quantity, 0), [items])
 
   const value = useMemo(
-    () => ({
-      items,
-      totalItems,
-      addItem,
-      updateQuantity,
-      removeItem,
-      clearCart,
-      getItemQuantity,
-      lastAddedItemId,
-    }),
-    [items, totalItems, addItem, updateQuantity, removeItem, clearCart, getItemQuantity, lastAddedItemId],
+    () => ({ items, addItem, updateItemQuantity, removeItem, clear, getItemQuantity, totalItems }),
+    [items, addItem, updateItemQuantity, removeItem, clear, getItemQuantity, totalItems],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

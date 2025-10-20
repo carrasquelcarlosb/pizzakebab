@@ -1,8 +1,11 @@
+const enableReactCompiler = process.env.NEXT_ENABLE_REACT_COMPILER === "true"
+const enablePartialPrerendering = process.env.NEXT_ENABLE_PPR === "true"
+
 const nextConfig = {
-  // Next.js 15 features
+  // Next.js experimental features are gated behind explicit opt-in flags.
   experimental: {
-    // Enable React 19 features
-    reactCompiler: true,
+    // Enable the React compiler only when React 19 is available in the runtime.
+    ...(enableReactCompiler ? { reactCompiler: true } : {}),
     // Enable Turbopack for development
     turbo: {
       rules: {
@@ -12,8 +15,8 @@ const nextConfig = {
         },
       },
     },
-    // Enable partial prerendering
-    ppr: true,
+    // Enable partial prerendering when running on a Next.js canary build.
+    ...(enablePartialPrerendering ? { ppr: true } : {}),
     // Enable server actions
     serverActions: {
       allowedOrigins: ["localhost:3000", "pizzakebab.com"],
@@ -47,7 +50,6 @@ const nextConfig = {
   i18n: {
     locales: ["en", "fr", "de"],
     defaultLocale: "en",
-    localeDetection: true,
   },
 
   // Performance optimizations
