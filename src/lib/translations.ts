@@ -146,6 +146,7 @@ export const translations = {
       orderSummary: "Order Summary",
       subtotal: "Subtotal",
       deliveryFee: "Delivery Fee",
+      tax: "Tax",
       total: "Total",
       promoCode: "Promo code",
       proceedToCheckout: "Proceed to Checkout",
@@ -230,6 +231,18 @@ export const translations = {
         cardNumber: "Card number is required",
         expiryDate: "Expiry date is required",
         cvv: "CVV is required",
+      },
+    },
+    address: {
+      labels: {
+        street: "Street Address",
+        city: "City",
+        zipCode: "ZIP Code",
+      },
+      validation: {
+        streetRequired: "Street address is required",
+        cityRequired: "City is required",
+        zipRequired: "ZIP code is required",
       },
     },
     // Menu Page
@@ -457,6 +470,7 @@ export const translations = {
       orderSummary: "Résumé de Commande",
       subtotal: "Sous-total",
       deliveryFee: "Frais de Livraison",
+      tax: "Taxes",
       total: "Total",
       promoCode: "Code promo",
       proceedToCheckout: "Procéder au Paiement",
@@ -541,6 +555,18 @@ export const translations = {
         cardNumber: "Le numéro de carte est requis",
         expiryDate: "La date d'expiration est requise",
         cvv: "Le CVV est requis",
+      },
+    },
+    address: {
+      labels: {
+        street: "Adresse",
+        city: "Ville",
+        zipCode: "Code postal",
+      },
+      validation: {
+        streetRequired: "L'adresse est requise",
+        cityRequired: "La ville est requise",
+        zipRequired: "Le code postal est requis",
       },
     },
     // Menu Page
@@ -769,6 +795,7 @@ export const translations = {
       orderSummary: "Bestellübersicht",
       subtotal: "Zwischensumme",
       deliveryFee: "Liefergebühr",
+      tax: "Steuer",
       total: "Gesamt",
       promoCode: "Promo-Code",
       proceedToCheckout: "Zur Kasse Gehen",
@@ -853,6 +880,18 @@ export const translations = {
         cardNumber: "Kartennummer ist erforderlich",
         expiryDate: "Ablaufdatum ist erforderlich",
         cvv: "CVV ist erforderlich",
+      },
+    },
+    address: {
+      labels: {
+        street: "Straßenadresse",
+        city: "Stadt",
+        zipCode: "Postleitzahl",
+      },
+      validation: {
+        streetRequired: "Straßenadresse ist erforderlich",
+        cityRequired: "Stadt ist erforderlich",
+        zipRequired: "Postleitzahl ist erforderlich",
       },
     },
     // Menu Page

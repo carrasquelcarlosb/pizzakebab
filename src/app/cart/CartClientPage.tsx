@@ -11,26 +11,13 @@ import { Input } from "@/components/ui/input"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { AppProviders } from "@/components/app-providers"
-import { useLanguage } from "@/contexts/language-context"
-import { useCart } from "@/contexts/cart-context"
-import { CartButton } from "@/components/cart-button"
-import { formatCurrency } from "@/lib/cart"
-
-const localeMap: Record<string, string> = {
-  en: "en-US",
-  fr: "fr-FR",
-  de: "de-DE",
-}
-const currencyMap: Record<string, string> = {
-  en: "USD",
-  fr: "EUR",
-  de: "EUR",
-}
+import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { calculatePricingBreakdown } from "@/lib/pricing"
+import { sampleCartItems } from "@/lib/sample-cart-items"
 
 function CartContent() {
-  const { t, language } = useLanguage()
-  const { items, updateQuantity, removeItem, subtotal, deliveryFee, total, orderMode, setOrderMode } = useCart()
+  const [cartItems, setCartItems] = useState(sampleCartItems)
+  const { t } = useLanguage()
 
   const locale = localeMap[language] ?? "en-US"
   const currency = currencyMap[language] ?? "USD"
@@ -42,6 +29,8 @@ function CartContent() {
   const handleIncrease = (id: number, quantity: number) => {
     updateQuantity(id, quantity + 1)
   }
+
+  const pricing = calculatePricingBreakdown(cartItems)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -156,16 +145,20 @@ eeeeeeeeeeeeeee          {items.length === 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between">
                         <span>{t("cart.subtotal")}</span>
-                        <span>{formatCurrency(subtotal, locale, currency)}</span>
+                        <span>${pricing.subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>{t("cart.deliveryFee")}</span>
-                        <span>{orderMode === "pickup" ? t("cart.free") : formatCurrency(deliveryFee, locale, currency)}</span>
+                        <span>${pricing.deliveryFee.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t("cart.tax")}</span>
+                        <span>${pricing.tax.toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-bold">
                         <span>{t("cart.total")}</span>
-                        <span>{formatCurrency(total, locale, currency)}</span>
+                        <span>${pricing.total.toFixed(2)}</span>
                       </div>
 
                       <div className="pt-4">

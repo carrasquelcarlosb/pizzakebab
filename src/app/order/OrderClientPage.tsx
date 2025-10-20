@@ -13,60 +13,23 @@ import { Separator } from "@/components/ui/separator"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { AppProviders } from "@/components/app-providers"
-import { useLanguage } from "@/contexts/language-context"
-import { useCart } from "@/contexts/cart-context"
-import { CartButton } from "@/components/cart-button"
-import { formatCurrency } from "@/lib/cart"
+import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { calculatePricingBreakdown } from "@/lib/pricing"
+import { sampleCartItems } from "@/lib/sample-cart-items"
+import { getAddressLabels, validateAddressFields, type AddressFields } from "@/lib/address"
 
-interface OrderForm {
-   firstName: string
-   lastName: string
-   email: string
-   phone: string
-   address: string
-   city: string
-   zipCode: string
-   paymentMethod: PaymentMethod | ""
-   cardNumber?: string
-   expiryDate?: string
-   cvv?: string
- }
-
-interface ResolvedSummaryLine {
-   id: number
-   quantity: number
-   item: LocalizedMenuItem
- }
-
-type OrderField = keyof OrderForm
-
-const errorTranslationKeys: Record<OrderField, TranslationKey> = {
-   firstName: "orderPage.errors.firstName",
-   lastName: "orderPage.errors.lastName",
-   email: "orderPage.errors.email",
-   phone: "orderPage.errors.phone",
-   address: "orderPage.errors.address",
-   city: "orderPage.errors.city",
-   zipCode: "orderPage.errors.zipCode",
-   paymentMethod: "orderPage.errors.paymentMethod",
-   cardNumber: "orderPage.errors.cardNumber",
-   expiryDate: "orderPage.errors.expiryDate",
-   cvv: "orderPage.errors.cvv",
- }
-
-const cardSpecificFields: OrderField[] = ["cardNumber", "expiryDate", "cvv"]
-
-const localeMap: Record<string, string> = {
-  en: "en-US",
-  fr: "fr-FR",
-  de: "de-DE",
+interface OrderForm extends AddressFields {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  paymentMethod: string
+  cardNumber?: string
+  expiryDate?: string
+  cvv?: string
 }
-const currencyMap: Record<string, string> = {
-  en: "USD",
-  fr: "EUR",
-  de: "EUR",
-}
+
+type OrderFormErrors = Partial<Record<keyof OrderForm, string>>
 
 function OrderContent() {
   const { t, language } = useLanguage()
@@ -85,12 +48,10 @@ function OrderContent() {
     expiryDate: "",
     cvv: "",
   })
-  const [errors, setErrors] = useState<Partial<Record<keyof OrderForm, string>>>({})
-
-  const locale = localeMap[language] ?? "en-US"
-  const currency = currencyMap[language] ?? "USD"
-  const isPickup = orderMode === "pickup"
-  const requiredMessage = t("checkout.errors.required")
+  const [errors, setErrors] = useState<OrderFormErrors>({})
+  const addressLabels = getAddressLabels(t)
+  const orderItems = sampleCartItems
+  const pricing = calculatePricingBreakdown(orderItems)
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -100,31 +61,29 @@ function OrderContent() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof OrderForm, string>> = {}
+    const newErrors: OrderFormErrors = {}
 
-    const baseFields: Array<keyof OrderForm> = ["firstName", "lastName", "email", "phone", "paymentMethod"]
-    const addressFields: Array<keyof OrderForm> = ["address", "city", "zipCode"]
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!formData.email.trim()) newErrors.email = "Email is required"
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
+    if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
 
-    for (const field of baseFields) {
-      if (!formData[field]) {
-        newErrors[field] = requiredMessage
-      }
-    }
+    const addressErrors = validateAddressFields(
+      {
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+      },
+      t,
+    )
 
-    if (!isPickup) {
-      for (const field of addressFields) {
-        if (!formData[field]) {
-          newErrors[field] = requiredMessage
-        }
-      }
-    }
+    Object.assign(newErrors, addressErrors)
 
     if (formData.paymentMethod === "card") {
-      for (const field of ["cardNumber", "expiryDate", "cvv"] as Array<keyof OrderForm>) {
-        if (!formData[field]) {
-          newErrors[field] = requiredMessage
-        }
-      }
+      if (!formData.cardNumber?.trim()) newErrors.cardNumber = "Card number is required"
+      if (!formData.expiryDate?.trim()) newErrors.expiryDate = "Expiry date is required"
+      if (!formData.cvv?.trim()) newErrors.cvv = "CVV is required"
     }
 
     setErrors(newErrors)
@@ -268,7 +227,7 @@ function OrderContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="address">{t("checkout.fields.address")}</Label>
+                    <Label htmlFor="address">{addressLabels.address}</Label>
                     <Input
                       id="address"
                       value={formData.address}
@@ -281,7 +240,7 @@ function OrderContent() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="city">{t("checkout.fields.city")}</Label>
+                      <Label htmlFor="city">{addressLabels.city}</Label>
                       <Input
                         id="city"
                         value={formData.city}
@@ -292,7 +251,7 @@ function OrderContent() {
                       {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="zipCode">{t("checkout.fields.zipCode")}</Label>
+                      <Label htmlFor="zipCode">{addressLabels.zipCode}</Label>
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
@@ -357,7 +316,9 @@ function OrderContent() {
                             onChange={(e) => handleInputChange("expiryDate", e.target.value)}
                             className={errors.expiryDate ? "border-red-500" : ""}
                           />
-                          {errors.expiryDate && <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>}
+                          {errors.expiryDate && (
+                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="cvv">{t("checkout.fields.cvv")}</Label>
@@ -408,13 +369,13 @@ function OrderContent() {
                   <Separator />
 
                   <div className="space-y-2">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
+                    {orderItems.map((item) => (
+                      <div key={item.id} className="flex justify-between">
                         <span>
                           {item.name}
-                          <span className="text-muted-foreground"> × {item.quantity}</span>
+                          {item.quantity > 1 ? ` ×${item.quantity}` : ""}
                         </span>
-                        <span>{formatCurrency(item.price * item.quantity, locale, currency)}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -424,11 +385,15 @@ function OrderContent() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>{t("cart.subtotal")}</span>
-                      <span>{formatCurrency(subtotal, locale, currency)}</span>
+                      <span>${pricing.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t("cart.deliveryFee")}</span>
-                      <span>{orderMode === "pickup" ? t("cart.free") : formatCurrency(deliveryFee, locale, currency)}</span>
+                      <span>${pricing.deliveryFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("cart.tax")}</span>
+                      <span>${pricing.tax.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -436,7 +401,7 @@ function OrderContent() {
 
                   <div className="flex justify-between font-bold text-lg">
                     <span>{t("cart.total")}</span>
-                    <span>{formatCurrency(total, locale, currency)}</span>
+                    <span>${pricing.total.toFixed(2)}</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>

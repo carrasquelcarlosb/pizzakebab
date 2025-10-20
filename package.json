@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "tsx --test \"tests/**/*.test.ts\"",
     "type-check": "tsc --noEmit",
     "test": "node --import tsx --test tests/menu-catalog.test.ts",
     "analyze": "ANALYZE=true npm run build"
