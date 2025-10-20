@@ -131,6 +131,46 @@ function MenuContent() {
         rating: 4.2,
       },
     ],
+    drinks: [
+      {
+        id: 501,
+        name: t("food.classicCola.name"),
+        description: t("food.classicCola.description"),
+        price: 2.99,
+        image: "/placeholder.svg?height=300&width=300",
+        category: t("categories.drinks"),
+        rating: 4.2,
+      },
+      {
+        id: 502,
+        name: t("food.sparklingWater.name"),
+        description: t("food.sparklingWater.description"),
+        price: 2.49,
+        image: "/placeholder.svg?height=300&width=300",
+        category: t("categories.drinks"),
+        rating: 4.0,
+      },
+    ],
+    desserts: [
+      {
+        id: 601,
+        name: t("food.baklava.name"),
+        description: t("food.baklava.description"),
+        price: 4.99,
+        image: "/placeholder.svg?height=300&width=300",
+        category: t("categories.desserts"),
+        rating: 4.6,
+      },
+      {
+        id: 602,
+        name: t("food.tiramisu.name"),
+        description: t("food.tiramisu.description"),
+        price: 5.99,
+        image: "/placeholder.svg?height=300&width=300",
+        category: t("categories.desserts"),
+        rating: 4.7,
+      },
+    ],
   }
 
   return (
@@ -163,6 +203,12 @@ function MenuContent() {
               <TabsTrigger value="sides" className="text-lg py-2 px-4">
                 {t("categories.sides")}
               </TabsTrigger>
+              <TabsTrigger value="drinks" className="text-lg py-2 px-4">
+                {t("categories.drinks")}
+              </TabsTrigger>
+              <TabsTrigger value="desserts" className="text-lg py-2 px-4">
+                {t("categories.desserts")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pizzas">
@@ -192,6 +238,22 @@ function MenuContent() {
             <TabsContent value="sides">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {menuItems.sides.map((item) => (
+                  <InteractiveMenuCard key={item.id} item={item} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="drinks">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {menuItems.drinks.map((item) => (
+                  <InteractiveMenuCard key={item.id} item={item} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="desserts">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {menuItems.desserts.map((item) => (
                   <InteractiveMenuCard key={item.id} item={item} />
                 ))}
               </div>

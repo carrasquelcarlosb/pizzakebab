@@ -6,56 +6,21 @@ import { ArrowRight, Flame } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
+import { menuCatalog } from "@/data/menu-catalog"
 
 export function CategorySection() {
   const { t } = useLanguage()
 
-  const categories = [
-    {
-      id: 1,
-      name: t("categories.pizzas"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 12,
-      href: "/menu/pizzas",
-      featured: true,
-    },
-    {
-      id: 2,
-      name: t("categories.kebabs"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 8,
-      href: "/menu/kebabs",
-      featured: true,
-    },
-    {
-      id: 3,
-      name: t("categories.wraps"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 6,
-      href: "/menu/wraps",
-    },
-    {
-      id: 4,
-      name: t("categories.sides"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 10,
-      href: "/menu/sides",
-    },
-    {
-      id: 5,
-      name: t("categories.drinks"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 15,
-      href: "/menu/drinks",
-    },
-    {
-      id: 6,
-      name: t("categories.desserts"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 7,
-      href: "/menu/desserts",
-    },
-  ]
+  const categoryOrder = ["pizzas", "kebabs", "wraps", "sides", "drinks", "desserts"] as const
+
+  const categories = categoryOrder.map((slug, index) => ({
+    id: index + 1,
+    name: t(`categories.${slug}`),
+    image: "/placeholder.svg?height=400&width=400",
+    count: menuCatalog[slug]?.length ?? 0,
+    href: `/menu/${slug}`,
+    featured: slug === "pizzas" || slug === "kebabs",
+  }))
 
   return (
     <section className="py-16 bg-white relative">
