@@ -2,14 +2,16 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { ShoppingCart, Star, Heart, Share2 } from "lucide-react"
+import { ShoppingCart, Star, Heart, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -30,20 +32,31 @@ interface InteractiveMenuCardProps {
 
 export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
-  const [quantity, setQuantity] = useState(1)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const { addItem, getItemQuantity } = useCart()
+  const currentCartQuantity = getItemQuantity(item.id)
+  const [quantity, setQuantity] = useState(() => Math.max(1, currentCartQuantity))
 
-  const displayPrice = item.discount
-    ? (item.price - (item.price * item.discount) / 100).toFixed(2)
-    : item.price.toFixed(2)
+  useEffect(() => {
+    if (currentCartQuantity > 0) {
+      setQuantity(currentCartQuantity)
+    }
+  }, [currentCartQuantity])
+
+  const discountedPrice = item.discount
+    ? item.price - (item.price * item.discount) / 100
+    : item.price
+  const formattedPrice = formatCurrency(discountedPrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : undefined
 
   const handleAddToCart = () => {
+    addItem(item.id, quantity)
     setIsAdding(true)
     setTimeout(() => setIsAdding(false), 1500)
-    // Add to cart logic would go here
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -189,32 +202,41 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
 
       <CardFooter className="flex justify-between items-center pt-0 pb-6 px-6">
         <div className="font-bold text-xl">
-          <span className="text-red-600 text-2xl">${displayPrice}</span>
-          {item.discount && (
-            <span className="text-sm text-muted-foreground line-through ml-2">${item.price.toFixed(2)}</span>
+          <span className="text-red-600 text-2xl">{formattedPrice}</span>
+          {formattedOriginalPrice && (
+            <span className="text-sm text-muted-foreground line-through ml-2">{formattedOriginalPrice}</span>
           )}
         </div>
 
-        <Button
-          className={cn(
-            "rounded-full px-6 transition-all duration-300 transform hover:scale-105 shadow-lg",
-            isAdding ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700",
+        <div className="flex items-center gap-3">
+          {isInCart && (
+            <Badge className="bg-green-100 text-green-700 border-green-200">
+              {t("common.inCart")}: {quantityInCart}
+            </Badge>
           )}
-          onClick={handleAddToCart}
-          disabled={isAdding}
-        >
-          {isAdding ? (
+          <Button
+            className={cn(
+              "rounded-full px-6 transition-all duration-300 transform hover:scale-105 shadow-lg",
+              isRecentlyAdded
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700",
+            )}
+            onClick={handleAddToCart}
+          >
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Added!
+              {isRecentlyAdded ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
+              {isRecentlyAdded
+                ? t("common.added")
+                : isInCart
+                  ? t("common.updateCart")
+                  : t("common.addToCart")}
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              Add to Cart
-            </div>
-          )}
-        </Button>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )

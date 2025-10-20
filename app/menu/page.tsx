@@ -1,4 +1,4 @@
-import MenuPageClient from "./MenuClientPage"
+import MenuPageClient from "@/app/menu/MenuClientPage"
 
 export const metadata = {
   title: "Menu - PizzaKebab",

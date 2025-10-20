@@ -6,21 +6,46 @@ import { ArrowRight, Flame } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
-import { menuCatalog } from "@/data/menu-catalog"
+import {
+  getMenuCategoryCount,
+  getMenuCategoryLabelKey,
+  type MenuCategory,
+} from "@/lib/menu-data"
 
 export function CategorySection() {
   const { t } = useLanguage()
 
-  const categoryOrder = ["pizzas", "kebabs", "wraps", "sides", "drinks", "desserts"] as const
+  const coreCategories: Array<{ key: MenuCategory; featured?: boolean }> = [
+    { key: "pizzas", featured: true },
+    { key: "kebabs", featured: true },
+    { key: "wraps" },
+    { key: "sides" },
+  ]
 
-  const categories = categoryOrder.map((slug, index) => ({
-    id: index + 1,
-    name: t(`categories.${slug}`),
-    image: "/placeholder.svg?height=400&width=400",
-    count: menuCatalog[slug]?.length ?? 0,
-    href: `/menu/${slug}`,
-    featured: slug === "pizzas" || slug === "kebabs",
-  }))
+  const categories = [
+    ...coreCategories.map(({ key, featured }) => ({
+      id: key,
+      name: t(getMenuCategoryLabelKey(key)),
+      image: "/placeholder.svg?height=400&width=400",
+      count: getMenuCategoryCount(key),
+      href: `/menu/${key}`,
+      featured,
+    })),
+    {
+      id: "drinks",
+      name: t("categories.drinks"),
+      image: "/placeholder.svg?height=400&width=400",
+      count: 6,
+      href: "/menu/drinks",
+    },
+    {
+      id: "desserts",
+      name: t("categories.desserts"),
+      image: "/placeholder.svg?height=400&width=400",
+      count: 4,
+      href: "/menu/desserts",
+    },
+  ]
 
   return (
     <section className="py-16 bg-white relative">
