@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { ShoppingCart } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { MainNav } from "@/components/main-nav"
@@ -9,14 +8,15 @@ import { FeaturedItems } from "@/components/featured-items"
 import { CategorySection } from "@/components/category-section"
 import { PromoBanner } from "@/components/promo-banner"
 import { Footer } from "@/components/footer"
-import { LanguageProvider } from "@/contexts/language-context"
+import { AppProviders } from "@/contexts/app-providers"
 import { AnimatedBackground } from "@/components/animated-background"
 import { FloatingActionButton } from "@/components/floating-action-button"
 import { EnhancedTestimonials } from "@/components/enhanced-testimonials"
+import { CartStatusButton } from "@/components/cart-status-button"
 
 export default function Home() {
   return (
-    <LanguageProvider>
+    <AppProviders>
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
           <div className="container flex h-16 items-center justify-between">
@@ -27,14 +27,7 @@ export default function Home() {
               <MobileNav />
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/cart">
-                <Button variant="outline" size="icon" className="relative rounded-full">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
-                    3
-                  </span>
-                </Button>
-              </Link>
+              <CartStatusButton />
               <Link href="/login">
                 <Button variant="outline" className="hidden md:inline-flex rounded-full">
                   Sign In
@@ -57,7 +50,7 @@ export default function Home() {
         <FloatingActionButton />
         <Footer />
       </div>
-    </LanguageProvider>
+    </AppProviders>
   )
 }
 

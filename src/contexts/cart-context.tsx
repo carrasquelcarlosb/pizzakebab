@@ -1,145 +1,115 @@
 "use client"
 
-import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
 
 export interface CartItem {
   id: number
-  name: string
-  price: number
   quantity: number
-  image?: string
 }
-
-interface CartState {
-  items: CartItem[]
-}
-
-type CartAction =
-  | { type: "ADD_ITEM"; payload: CartItem }
-  | { type: "REMOVE_ITEM"; payload: { id: number } }
-  | { type: "INCREMENT"; payload: { id: number } }
-  | { type: "DECREMENT"; payload: { id: number } }
-  | { type: "SET_QUANTITY"; payload: { id: number; quantity: number } }
-  | { type: "CLEAR" }
 
 interface CartContextValue {
   items: CartItem[]
-  subtotal: number
-  deliveryFee: number
-  total: number
-  addItem: (item: CartItem) => void
+  addItem: (id: number, quantity?: number) => void
+  updateItemQuantity: (id: number, quantity: number) => void
   removeItem: (id: number) => void
-  increaseQuantity: (id: number) => void
-  decreaseQuantity: (id: number) => void
-  setQuantity: (id: number, quantity: number) => void
-  clearCart: () => void
+  clear: () => void
+  getItemQuantity: (id: number) => number
+  totalItems: number
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined)
 
-function cartReducer(state: CartState, action: CartAction): CartState {
-  switch (action.type) {
-    case "ADD_ITEM": {
-      const existingIndex = state.items.findIndex((item) => item.id === action.payload.id)
+const STORAGE_KEY = "pizzakebab-cart-items"
 
-      if (existingIndex >= 0) {
-        const items = state.items.map((item, index) =>
-          index === existingIndex
-            ? { ...item, quantity: item.quantity + action.payload.quantity }
-            : item,
-        )
-        return { items }
-      }
+type CartDraft = Record<number, CartItem>
 
-      return { items: [...state.items, action.payload] }
-    }
-    case "REMOVE_ITEM": {
-      return { items: state.items.filter((item) => item.id !== action.payload.id) }
-    }
-    case "INCREMENT": {
-      return {
-        items: state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: item.quantity + 1 } : item,
-        ),
-      }
-    }
-    case "DECREMENT": {
-      return {
-        items: state.items
-          .map((item) =>
-            item.id === action.payload.id ? { ...item, quantity: item.quantity - 1 } : item,
-          )
-          .filter((item) => item.quantity > 0),
-      }
-    }
-    case "SET_QUANTITY": {
-      const { id, quantity } = action.payload
-      if (quantity <= 0) {
-        return { items: state.items.filter((item) => item.id !== id) }
-      }
-
-      return {
-        items: state.items.map((item) => (item.id === id ? { ...item, quantity } : item)),
-      }
-    }
-    case "CLEAR": {
-      return { items: [] }
-    }
-    default: {
-      return state
-    }
-  }
+const toDraft = (items: CartItem[]): CartDraft => {
+  return items.reduce<CartDraft>((draft, line) => {
+    draft[line.id] = line
+    return draft
+  }, {})
 }
 
-const DELIVERY_FEE = 2.99
+const fromDraft = (draft: CartDraft | undefined | null): CartItem[] => {
+  if (!draft) return []
+  return Object.values(draft)
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] })
+  const [items, setItems] = useState<CartItem[]>([])
 
-  const subtotal = useMemo(
-    () => state.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [state.items],
-  )
-  const total = useMemo(() => subtotal + DELIVERY_FEE, [subtotal])
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as CartDraft
+      setItems(fromDraft(parsed))
+    } catch (error) {
+      console.warn("Unable to read cart from storage", error)
+    }
+  }, [])
 
-  const addItem = useCallback((item: CartItem) => {
-    dispatch({ type: "ADD_ITEM", payload: item })
+  useEffect(() => {
+    try {
+      const draft = toDraft(items)
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
+    } catch (error) {
+      console.warn("Unable to persist cart", error)
+    }
+  }, [items])
+
+  const addItem = useCallback((id: number, quantity = 1) => {
+    setItems((previous) => {
+      const draft = toDraft(previous)
+      const existing = draft[id]
+      const nextQuantity = Math.max(1, (existing?.quantity ?? 0) + quantity)
+      draft[id] = { id, quantity: nextQuantity }
+      return fromDraft(draft)
+    })
+  }, [])
+
+  const updateItemQuantity = useCallback((id: number, quantity: number) => {
+    if (quantity < 1) {
+      setItems((previous) => previous.filter((line) => line.id !== id))
+      return
+    }
+    setItems((previous) => {
+      const draft = toDraft(previous)
+      if (!draft[id]) return previous
+      draft[id] = { id, quantity }
+      return fromDraft(draft)
+    })
   }, [])
 
   const removeItem = useCallback((id: number) => {
-    dispatch({ type: "REMOVE_ITEM", payload: { id } })
+    setItems((previous) => previous.filter((line) => line.id !== id))
   }, [])
 
-  const increaseQuantity = useCallback((id: number) => {
-    dispatch({ type: "INCREMENT", payload: { id } })
+  const clear = useCallback(() => {
+    setItems([])
   }, [])
 
-  const decreaseQuantity = useCallback((id: number) => {
-    dispatch({ type: "DECREMENT", payload: { id } })
-  }, [])
+  const getItemQuantity = useCallback(
+    (id: number) => {
+      const match = items.find((line) => line.id === id)
+      return match?.quantity ?? 0
+    },
+    [items],
+  )
 
-  const setQuantity = useCallback((id: number, quantity: number) => {
-    dispatch({ type: "SET_QUANTITY", payload: { id, quantity } })
-  }, [])
-
-  const clearCart = useCallback(() => {
-    dispatch({ type: "CLEAR" })
-  }, [])
+  const totalItems = useMemo(() => items.reduce((sum, line) => sum + line.quantity, 0), [items])
 
   const value = useMemo(
-    () => ({
-      items: state.items,
-      subtotal,
-      deliveryFee: DELIVERY_FEE,
-      total,
-      addItem,
-      removeItem,
-      increaseQuantity,
-      decreaseQuantity,
-      setQuantity,
-      clearCart,
-    }),
-    [state.items, subtotal, total, addItem, removeItem, increaseQuantity, decreaseQuantity, setQuantity, clearCart],
+    () => ({ items, addItem, updateItemQuantity, removeItem, clear, getItemQuantity, totalItems }),
+    [items, addItem, updateItemQuantity, removeItem, clear, getItemQuantity, totalItems],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
