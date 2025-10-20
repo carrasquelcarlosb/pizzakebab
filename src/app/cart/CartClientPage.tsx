@@ -13,34 +13,11 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
-
-// Sample cart data
-const initialCartItems = [
-  {
-    id: 101,
-    name: "Spicy Kebab Pizza",
-    price: 14.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 201,
-    name: "Mixed Grill Kebab",
-    price: 16.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-  {
-    id: 401,
-    name: "Garlic Cheese Bread",
-    price: 5.99,
-    quantity: 1,
-    image: "/placeholder.svg?height=100&width=100",
-  },
-]
+import { calculatePricingBreakdown } from "@/lib/pricing"
+import { sampleCartItems } from "@/lib/sample-cart-items"
 
 function CartContent() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
+  const [cartItems, setCartItems] = useState(sampleCartItems)
   const { t } = useLanguage()
 
   const updateQuantity = (id: number, newQuantity: number) => {
@@ -53,9 +30,7 @@ function CartContent() {
     setCartItems(cartItems.filter((item) => item.id !== id))
   }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const deliveryFee = 2.99
-  const total = subtotal + deliveryFee
+  const pricing = calculatePricingBreakdown(cartItems)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -138,16 +113,20 @@ function CartContent() {
                     <div className="space-y-4">
                       <div className="flex justify-between">
                         <span>{t("cart.subtotal")}</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>${pricing.subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>{t("cart.deliveryFee")}</span>
-                        <span>${deliveryFee.toFixed(2)}</span>
+                        <span>${pricing.deliveryFee.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t("cart.tax")}</span>
+                        <span>${pricing.tax.toFixed(2)}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-bold">
                         <span>{t("cart.total")}</span>
-                        <span>${total.toFixed(2)}</span>
+                        <span>${pricing.total.toFixed(2)}</span>
                       </div>
 
                       <div className="pt-4">

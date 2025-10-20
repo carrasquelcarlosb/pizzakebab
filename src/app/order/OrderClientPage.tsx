@@ -12,20 +12,22 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { calculatePricingBreakdown } from "@/lib/pricing"
+import { sampleCartItems } from "@/lib/sample-cart-items"
+import { getAddressLabels, validateAddressFields, type AddressFields } from "@/lib/address"
 
-interface OrderForm {
+interface OrderForm extends AddressFields {
   firstName: string
   lastName: string
   email: string
   phone: string
-  address: string
-  city: string
-  zipCode: string
   paymentMethod: string
   cardNumber?: string
   expiryDate?: string
   cvv?: string
 }
+
+type OrderFormErrors = Partial<Record<keyof OrderForm, string>>
 
 function OrderContent() {
   const { t } = useLanguage()
@@ -43,7 +45,10 @@ function OrderContent() {
     expiryDate: "",
     cvv: "",
   })
-  const [errors, setErrors] = useState<Partial<OrderForm>>({})
+  const [errors, setErrors] = useState<OrderFormErrors>({})
+  const addressLabels = getAddressLabels(t)
+  const orderItems = sampleCartItems
+  const pricing = calculatePricingBreakdown(orderItems)
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -54,21 +59,29 @@ function OrderContent() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<OrderForm> = {}
+    const newErrors: OrderFormErrors = {}
 
-    if (!formData.firstName) newErrors.firstName = "First name is required"
-    if (!formData.lastName) newErrors.lastName = "Last name is required"
-    if (!formData.email) newErrors.email = "Email is required"
-    if (!formData.phone) newErrors.phone = "Phone number is required"
-    if (!formData.address) newErrors.address = "Address is required"
-    if (!formData.city) newErrors.city = "City is required"
-    if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!formData.email.trim()) newErrors.email = "Email is required"
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
     if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
 
+    const addressErrors = validateAddressFields(
+      {
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+      },
+      t,
+    )
+
+    Object.assign(newErrors, addressErrors)
+
     if (formData.paymentMethod === "card") {
-      if (!formData.cardNumber) newErrors.cardNumber = "Card number is required"
-      if (!formData.expiryDate) newErrors.expiryDate = "Expiry date is required"
-      if (!formData.cvv) newErrors.cvv = "CVV is required"
+      if (!formData.cardNumber?.trim()) newErrors.cardNumber = "Card number is required"
+      if (!formData.expiryDate?.trim()) newErrors.expiryDate = "Expiry date is required"
+      if (!formData.cvv?.trim()) newErrors.cvv = "CVV is required"
     }
 
     setErrors(newErrors)
@@ -133,7 +146,7 @@ function OrderContent() {
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
                         className={errors.firstName ? "border-red-500" : ""}
                       />
-                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
+                      {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                     </div>
                     <div>
                       <Label htmlFor="lastName">Last Name</Label>
@@ -143,7 +156,7 @@ function OrderContent() {
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
                         className={errors.lastName ? "border-red-500" : ""}
                       />
-                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+                      {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                     </div>
                   </div>
 
@@ -156,7 +169,7 @@ function OrderContent() {
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       className={errors.email ? "border-red-500" : ""}
                     />
-                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
 
                   <div>
@@ -167,7 +180,7 @@ function OrderContent() {
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       className={errors.phone ? "border-red-500" : ""}
                     />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -179,36 +192,36 @@ function OrderContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="address">Street Address</Label>
+                    <Label htmlFor="address">{addressLabels.address}</Label>
                     <Input
                       id="address"
                       value={formData.address}
                       onChange={(e) => handleInputChange("address", e.target.value)}
                       className={errors.address ? "border-red-500" : ""}
                     />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="city">City</Label>
+                      <Label htmlFor="city">{addressLabels.city}</Label>
                       <Input
                         id="city"
                         value={formData.city}
                         onChange={(e) => handleInputChange("city", e.target.value)}
                         className={errors.city ? "border-red-500" : ""}
                       />
-                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>}
+                      {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="zipCode">ZIP Code</Label>
+                      <Label htmlFor="zipCode">{addressLabels.zipCode}</Label>
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange("zipCode", e.target.value)}
                         className={errors.zipCode ? "border-red-500" : ""}
                       />
-                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode.message}</p>}
+                      {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
                     </div>
                   </div>
                 </CardContent>
@@ -252,7 +265,7 @@ function OrderContent() {
                           onChange={(e) => handleInputChange("cardNumber", e.target.value)}
                           className={errors.cardNumber ? "border-red-500" : ""}
                         />
-                        {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>}
+                        {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -266,7 +279,7 @@ function OrderContent() {
                             className={errors.expiryDate ? "border-red-500" : ""}
                           />
                           {errors.expiryDate && (
-                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate.message}</p>
+                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
                           )}
                         </div>
                         <div>
@@ -278,7 +291,7 @@ function OrderContent() {
                             onChange={(e) => handleInputChange("cvv", e.target.value)}
                             className={errors.cvv ? "border-red-500" : ""}
                           />
-                          {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv.message}</p>}
+                          {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
                         </div>
                       </div>
                     </div>
@@ -295,42 +308,39 @@ function OrderContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Spicy Kebab Pizza</span>
-                      <span>$14.99</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Mixed Grill Kebab</span>
-                      <span>$16.99</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Garlic Cheese Bread</span>
-                      <span>$5.99</span>
-                    </div>
+                    {orderItems.map((item) => (
+                      <div key={item.id} className="flex justify-between">
+                        <span>
+                          {item.name}
+                          {item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                        </span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
                   </div>
 
                   <Separator />
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>$37.97</span>
+                      <span>{t("cart.subtotal")}</span>
+                      <span>${pricing.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Delivery Fee</span>
-                      <span>$2.99</span>
+                      <span>{t("cart.deliveryFee")}</span>
+                      <span>${pricing.deliveryFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Tax</span>
-                      <span>$3.28</span>
+                      <span>{t("cart.tax")}</span>
+                      <span>${pricing.tax.toFixed(2)}</span>
                     </div>
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>$44.24</span>
+                    <span>{t("cart.total")}</span>
+                    <span>${pricing.total.toFixed(2)}</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
