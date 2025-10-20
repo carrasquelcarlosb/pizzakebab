@@ -1,3 +1,7 @@
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
+
 const enableReactCompiler = process.env.NEXT_ENABLE_REACT_COMPILER === "true"
 const enablePartialPrerendering = process.env.NEXT_ENABLE_PPR === "true"
 
