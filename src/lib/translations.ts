@@ -105,6 +105,22 @@ export const translations = {
         name: "Spicy Potato Wedges",
         description: "Crispy potato wedges seasoned with spicy herbs",
       },
+      classicCola: {
+        name: "Classic Cola",
+        description: "Refreshing fizzy cola served chilled.",
+      },
+      sparklingWater: {
+        name: "Sparkling Water",
+        description: "Lightly carbonated mineral water with a slice of lemon.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Layers of flaky pastry with nuts and honey syrup.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Classic Italian dessert with mascarpone and espresso-soaked ladyfingers.",
+      },
     },
     // Testimonials
     testimonials: {
@@ -125,7 +141,7 @@ export const translations = {
     cart: {
       title: "Your Cart",
       empty: "Your cart is empty",
-      emptySubtitle: "Looks like you haven't added anything to your cart yet.",
+      emptySubtitle: "Browse the menu to add a kebab to your order.",
       browseMenu: "Browse Menu",
       orderSummary: "Order Summary",
       subtotal: "Subtotal",
@@ -135,6 +151,87 @@ export const translations = {
       promoCode: "Promo code",
       proceedToCheckout: "Proceed to Checkout",
       continueShopping: "Continue Shopping",
+      quantity: "Qty",
+      addToCart: "Add to Cart",
+      added: "Added!",
+      orderModeLabel: "Choose your order mode",
+      delivery: "Delivery",
+      pickup: "Pickup",
+      deliveryDescription: "We'll deliver straight to your door.",
+      pickupDescription: "Pick up your meal at our restaurant.",
+      free: "Free",
+    },
+    // Order Page
+    orderPage: {
+      title: "Complete Your Order",
+      sections: {
+        fulfillment: "How would you like to get your order?",
+        customerInformation: "Customer Information",
+        deliveryAddress: "Delivery Address",
+        paymentMethod: "Payment Method",
+        summary: "Order Summary",
+      },
+      fulfillment: {
+        delivery: "Delivery",
+        deliveryDescription: "Have your meal brought straight to you.",
+        pickup: "Pickup",
+        pickupDescription: "Grab your order at the counter when it's ready.",
+      },
+      fields: {
+        firstName: "First Name",
+        lastName: "Last Name",
+        email: "Email",
+        phone: "Phone",
+        address: "Street Address",
+        city: "City",
+        zipCode: "ZIP Code",
+        paymentMethod: "Payment Method",
+        cardNumber: "Card Number",
+        expiryDate: "Expiry Date",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Credit/Debit Card",
+        cash: "Cash on Delivery",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/YY",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Fulfillment",
+        subtotal: "Subtotal",
+        deliveryFee: "Delivery Fee",
+        tax: "Tax",
+        total: "Total",
+      },
+      actions: {
+        placeOrder: "Place Order",
+        processing: "Processing...",
+      },
+      empty: {
+        title: "Your cart is empty",
+        subtitle: "Add a few delicious items before completing your order.",
+        cta: "Browse the menu",
+      },
+      notifications: {
+        success: "Order placed successfully!",
+        failure: "Failed to place order. Please try again.",
+      },
+      errors: {
+        firstName: "First name is required",
+        lastName: "Last name is required",
+        email: "Email is required",
+        phone: "Phone number is required",
+        address: "Address is required",
+        city: "City is required",
+        zipCode: "ZIP code is required",
+        paymentMethod: "Payment method is required",
+        cardNumber: "Card number is required",
+        expiryDate: "Expiry date is required",
+        cvv: "CVV is required",
+      },
     },
     address: {
       labels: {
@@ -151,6 +248,50 @@ export const translations = {
     // Menu Page
     menuPage: {
       title: "Our Menu",
+    },
+    checkout: {
+      title: "Complete Your Order",
+      selectedModePrefix: "Current mode:",
+      emptyTitle: "Your cart is empty",
+      emptySubtitle: "Add some delicious items before checking out.",
+      sections: {
+        customerInformation: "Customer Information",
+        deliveryAddress: "Delivery Address",
+        paymentMethod: "Payment Method",
+        orderSummary: "Order Summary",
+      },
+      fields: {
+        firstName: "First Name",
+        lastName: "Last Name",
+        email: "Email",
+        phone: "Phone",
+        address: "Street Address",
+        city: "City",
+        zipCode: "ZIP Code",
+        cardNumber: "Card Number",
+        expiryDate: "Expiry Date",
+        cvv: "CVV",
+      },
+      payment: {
+        card: "Credit/Debit Card",
+        cash: "Cash on Delivery",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/YY",
+        cvv: "123",
+      },
+      actions: {
+        placeOrder: "Place Order",
+        processing: "Processing...",
+        backToCart: "Back to Cart",
+      },
+      errors: {
+        required: "Please fill out this field",
+      },
+      pickupNotice: "Pickup selected — address details are optional.",
+      success: "Order placed successfully!",
+      failure: "Failed to place order. Please try again.",
     },
     // Footer
     footer: {
@@ -176,6 +317,10 @@ export const translations = {
       specialtyPizzas: "Specialty Pizzas",
       classicPizzas: "Classic Pizzas",
       vegetarian: "Vegetarian",
+      addToCart: "Add to Cart",
+      updateCart: "Update Cart",
+      added: "Added",
+      inCart: "In Cart",
     },
   },
   fr: {
@@ -284,6 +429,22 @@ export const translations = {
         name: "Quartiers de Pommes de Terre Épicés",
         description: "Quartiers de pommes de terre croustillants assaisonnés aux herbes épicées",
       },
+      classicCola: {
+        name: "Cola Classique",
+        description: "Cola pétillant rafraîchissant servi bien frais.",
+      },
+      sparklingWater: {
+        name: "Eau Pétillante",
+        description: "Eau minérale légèrement gazeuse avec une tranche de citron.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Couches de pâte feuilletée avec des noix et du sirop de miel.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Dessert italien classique au mascarpone et biscuits imbibés d'espresso.",
+      },
     },
     // Testimonials
     testimonials: {
@@ -304,7 +465,7 @@ export const translations = {
     cart: {
       title: "Votre Panier",
       empty: "Votre panier est vide",
-      emptySubtitle: "Il semble que vous n'ayez encore rien ajouté à votre panier.",
+      emptySubtitle: "Ajoutez un kebab depuis le menu pour commencer votre commande.",
       browseMenu: "Parcourir le Menu",
       orderSummary: "Résumé de Commande",
       subtotal: "Sous-total",
@@ -314,6 +475,87 @@ export const translations = {
       promoCode: "Code promo",
       proceedToCheckout: "Procéder au Paiement",
       continueShopping: "Continuer les Achats",
+      quantity: "Qté",
+      addToCart: "Ajouter au panier",
+      added: "Ajouté !",
+      orderModeLabel: "Choisissez votre mode de commande",
+      delivery: "Livraison",
+      pickup: "À emporter",
+      deliveryDescription: "Nous livrons directement chez vous.",
+      pickupDescription: "Récupérez votre commande au restaurant.",
+      free: "Offert",
+    },
+    // Order Page
+    orderPage: {
+      title: "Finalisez Votre Commande",
+      sections: {
+        fulfillment: "Comment souhaitez-vous récupérer votre commande ?",
+        customerInformation: "Informations Client",
+        deliveryAddress: "Adresse de Livraison",
+        paymentMethod: "Mode de Paiement",
+        summary: "Récapitulatif de Commande",
+      },
+      fulfillment: {
+        delivery: "Livraison",
+        deliveryDescription: "Faites-vous livrer directement chez vous.",
+        pickup: "À emporter",
+        pickupDescription: "Récupérez votre commande au comptoir quand elle est prête.",
+      },
+      fields: {
+        firstName: "Prénom",
+        lastName: "Nom",
+        email: "Email",
+        phone: "Téléphone",
+        address: "Adresse",
+        city: "Ville",
+        zipCode: "Code Postal",
+        paymentMethod: "Mode de Paiement",
+        cardNumber: "Numéro de Carte",
+        expiryDate: "Date d'Expiration",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Carte de Crédit/Débit",
+        cash: "Paiement à la Livraison",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/AA",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Mode de retrait",
+        subtotal: "Sous-total",
+        deliveryFee: "Frais de Livraison",
+        tax: "Taxes",
+        total: "Total",
+      },
+      actions: {
+        placeOrder: "Passer la Commande",
+        processing: "Traitement...",
+      },
+      empty: {
+        title: "Votre panier est vide",
+        subtitle: "Ajoutez quelques délices avant de finaliser votre commande.",
+        cta: "Parcourir le menu",
+      },
+      notifications: {
+        success: "Commande passée avec succès !",
+        failure: "Échec de la commande. Veuillez réessayer.",
+      },
+      errors: {
+        firstName: "Le prénom est requis",
+        lastName: "Le nom est requis",
+        email: "L'email est requis",
+        phone: "Le numéro de téléphone est requis",
+        address: "L'adresse est requise",
+        city: "La ville est requise",
+        zipCode: "Le code postal est requis",
+        paymentMethod: "Le mode de paiement est requis",
+        cardNumber: "Le numéro de carte est requis",
+        expiryDate: "La date d'expiration est requise",
+        cvv: "Le CVV est requis",
+      },
     },
     address: {
       labels: {
@@ -330,6 +572,50 @@ export const translations = {
     // Menu Page
     menuPage: {
       title: "Notre Menu",
+    },
+    checkout: {
+      title: "Finalisez Votre Commande",
+      selectedModePrefix: "Mode actuel :",
+      emptyTitle: "Votre panier est vide",
+      emptySubtitle: "Ajoutez quelques délices avant de valider votre commande.",
+      sections: {
+        customerInformation: "Informations Client",
+        deliveryAddress: "Adresse de Livraison",
+        paymentMethod: "Mode de Paiement",
+        orderSummary: "Résumé de Commande",
+      },
+      fields: {
+        firstName: "Prénom",
+        lastName: "Nom",
+        email: "Email",
+        phone: "Téléphone",
+        address: "Adresse",
+        city: "Ville",
+        zipCode: "Code Postal",
+        cardNumber: "Numéro de Carte",
+        expiryDate: "Date d'expiration",
+        cvv: "CVV",
+      },
+      payment: {
+        card: "Carte de crédit/débit",
+        cash: "Paiement en espèces",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/AA",
+        cvv: "123",
+      },
+      actions: {
+        placeOrder: "Passer la commande",
+        processing: "Traitement...",
+        backToCart: "Retour au panier",
+      },
+      errors: {
+        required: "Merci de compléter ce champ",
+      },
+      pickupNotice: "Mode à emporter sélectionné — l'adresse est facultative.",
+      success: "Commande passée avec succès !",
+      failure: "Échec de la commande. Veuillez réessayer.",
     },
     // Footer
     footer: {
@@ -355,6 +641,10 @@ export const translations = {
       specialtyPizzas: "Pizzas Spécialité",
       classicPizzas: "Pizzas Classiques",
       vegetarian: "Végétarien",
+      addToCart: "Ajouter au panier",
+      updateCart: "Mettre à jour",
+      added: "Ajouté",
+      inCart: "Dans le panier",
     },
   },
   de: {
@@ -464,6 +754,22 @@ export const translations = {
         name: "Würzige Kartoffelecken",
         description: "Knusprige Kartoffelecken gewürzt mit würzigen Kräutern",
       },
+      classicCola: {
+        name: "Klassische Cola",
+        description: "Erfrischende spritzige Cola, gekühlt serviert.",
+      },
+      sparklingWater: {
+        name: "Sprudelwasser",
+        description: "Leicht kohlensäurehaltiges Mineralwasser mit einer Zitronenscheibe.",
+      },
+      baklava: {
+        name: "Baklava",
+        description: "Schichten aus Blätterteig mit Nüssen und Honigsirup.",
+      },
+      tiramisu: {
+        name: "Tiramisu",
+        description: "Klassisches italienisches Dessert mit Mascarpone und Espresso-getränkten Löffelbiskuits.",
+      },
     },
     // Testimonials
     testimonials: {
@@ -484,7 +790,7 @@ export const translations = {
     cart: {
       title: "Ihr Warenkorb",
       empty: "Ihr Warenkorb ist leer",
-      emptySubtitle: "Es sieht so aus, als hätten Sie noch nichts zu Ihrem Warenkorb hinzugefügt.",
+      emptySubtitle: "Fügen Sie über die Speisekarte einen Kebab hinzu, um zu starten.",
       browseMenu: "Menü Durchsuchen",
       orderSummary: "Bestellübersicht",
       subtotal: "Zwischensumme",
@@ -494,6 +800,87 @@ export const translations = {
       promoCode: "Promo-Code",
       proceedToCheckout: "Zur Kasse Gehen",
       continueShopping: "Weiter Einkaufen",
+      quantity: "Menge",
+      addToCart: "In den Warenkorb",
+      added: "Hinzugefügt!",
+      orderModeLabel: "Wählen Sie Ihre Bestellart",
+      delivery: "Lieferung",
+      pickup: "Abholung",
+      deliveryDescription: "Wir liefern direkt zu Ihnen nach Hause.",
+      pickupDescription: "Holen Sie Ihre Bestellung im Restaurant ab.",
+      free: "Kostenlos",
+    },
+    // Order Page
+    orderPage: {
+      title: "Schließen Sie Ihre Bestellung Ab",
+      sections: {
+        fulfillment: "Wie möchten Sie Ihre Bestellung erhalten?",
+        customerInformation: "Kundendaten",
+        deliveryAddress: "Lieferadresse",
+        paymentMethod: "Zahlungsmethode",
+        summary: "Bestellübersicht",
+      },
+      fulfillment: {
+        delivery: "Lieferung",
+        deliveryDescription: "Lassen Sie sich das Essen direkt nach Hause bringen.",
+        pickup: "Abholung",
+        pickupDescription: "Holen Sie Ihre Bestellung ab, sobald sie fertig ist.",
+      },
+      fields: {
+        firstName: "Vorname",
+        lastName: "Nachname",
+        email: "E-Mail",
+        phone: "Telefon",
+        address: "Straße und Hausnummer",
+        city: "Stadt",
+        zipCode: "PLZ",
+        paymentMethod: "Zahlungsmethode",
+        cardNumber: "Kartennummer",
+        expiryDate: "Ablaufdatum",
+        cvv: "CVV",
+      },
+      paymentMethods: {
+        card: "Kredit-/Debitkarte",
+        cash: "Barzahlung bei Lieferung",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/JJ",
+        cvv: "123",
+      },
+      summary: {
+        fulfillment: "Art der Zustellung",
+        subtotal: "Zwischensumme",
+        deliveryFee: "Liefergebühr",
+        tax: "Steuer",
+        total: "Gesamt",
+      },
+      actions: {
+        placeOrder: "Bestellung Abschicken",
+        processing: "Wird verarbeitet...",
+      },
+      empty: {
+        title: "Ihr Warenkorb ist leer",
+        subtitle: "Fügen Sie ein paar Leckereien hinzu, bevor Sie die Bestellung abschließen.",
+        cta: "Menü ansehen",
+      },
+      notifications: {
+        success: "Bestellung erfolgreich aufgegeben!",
+        failure: "Bestellung fehlgeschlagen. Bitte versuche es erneut.",
+      },
+      errors: {
+        firstName: "Vorname ist erforderlich",
+        lastName: "Nachname ist erforderlich",
+        email: "E-Mail ist erforderlich",
+        phone: "Telefonnummer ist erforderlich",
+        address: "Adresse ist erforderlich",
+        city: "Stadt ist erforderlich",
+        zipCode: "PLZ ist erforderlich",
+        paymentMethod: "Zahlungsmethode ist erforderlich",
+        cardNumber: "Kartennummer ist erforderlich",
+        expiryDate: "Ablaufdatum ist erforderlich",
+        cvv: "CVV ist erforderlich",
+      },
     },
     address: {
       labels: {
@@ -510,6 +897,50 @@ export const translations = {
     // Menu Page
     menuPage: {
       title: "Unser Menü",
+    },
+    checkout: {
+      title: "Schließen Sie Ihre Bestellung ab",
+      selectedModePrefix: "Aktueller Modus:",
+      emptyTitle: "Ihr Warenkorb ist leer",
+      emptySubtitle: "Fügen Sie vor dem Abschluss einige leckere Artikel hinzu.",
+      sections: {
+        customerInformation: "Kundeninformationen",
+        deliveryAddress: "Lieferadresse",
+        paymentMethod: "Zahlungsmethode",
+        orderSummary: "Bestellübersicht",
+      },
+      fields: {
+        firstName: "Vorname",
+        lastName: "Nachname",
+        email: "E-Mail",
+        phone: "Telefon",
+        address: "Straße und Hausnummer",
+        city: "Stadt",
+        zipCode: "Postleitzahl",
+        cardNumber: "Kartennummer",
+        expiryDate: "Ablaufdatum",
+        cvv: "CVV",
+      },
+      payment: {
+        card: "Kredit-/Debitkarte",
+        cash: "Barzahlung",
+      },
+      placeholders: {
+        cardNumber: "1234 5678 9012 3456",
+        expiryDate: "MM/JJ",
+        cvv: "123",
+      },
+      actions: {
+        placeOrder: "Bestellung abschließen",
+        processing: "Wird verarbeitet...",
+        backToCart: "Zurück zum Warenkorb",
+      },
+      errors: {
+        required: "Bitte füllen Sie dieses Feld aus",
+      },
+      pickupNotice: "Abholung gewählt – Adressangaben sind optional.",
+      success: "Bestellung erfolgreich aufgegeben!",
+      failure: "Bestellung fehlgeschlagen. Bitte erneut versuchen.",
     },
     // Footer
     footer: {
@@ -533,11 +964,25 @@ export const translations = {
       new: "NEU",
       off: "RABATT",
       specialtyPizzas: "Spezialitäten Pizzas",
-      classicPizzas: "Klassische Pizzas",
+      classicPizzas: "Klassische Pizzen",
       vegetarian: "Vegetarisch",
+      addToCart: "In den Warenkorb",
+      updateCart: "Aktualisieren",
+      added: "Hinzugefügt",
+      inCart: "Im Warenkorb",
     },
   },
 } as const
 
+type DotNestedKeys<T> = T extends object
+  ? {
+      [K in Extract<keyof T, string>]: T[K] extends object
+        ? `${K}` | `${K}.${DotNestedKeys<T[K]>}`
+        : `${K}`
+    }[Extract<keyof T, string>]
+  : never
+
 export type Language = keyof typeof translations
-export type TranslationKey = keyof typeof translations.en
+export type TranslationSchema = (typeof translations)[Language]
+export type TranslationKey = DotNestedKeys<TranslationSchema>
+export type FoodKey = keyof TranslationSchema["food"]

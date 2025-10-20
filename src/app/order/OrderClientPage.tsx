@@ -2,7 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,7 +32,8 @@ interface OrderForm extends AddressFields {
 type OrderFormErrors = Partial<Record<keyof OrderForm, string>>
 
 function OrderContent() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const { items, subtotal, deliveryFee, total, orderMode, setOrderMode } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<OrderForm>({
     firstName: "",
@@ -52,7 +55,6 @@ function OrderContent() {
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
@@ -96,20 +98,48 @@ function OrderContent() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // In a real app, you would process the order here
-      console.log("Order submitted:", formData)
-
-      // Redirect to success page or show success message
-      alert("Order placed successfully!")
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      alert(t("checkout.success"))
     } catch (error) {
       console.error("Order submission failed:", error)
-      alert("Failed to place order. Please try again.")
+      alert(t("checkout.failure"))
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const orderModeLabel = useMemo(
+    () => (orderMode === "delivery" ? t("cart.delivery") : t("cart.pickup")),
+    [orderMode, t],
+  )
+  const selectedModeLabel = `${t("checkout.selectedModePrefix")} ${orderModeLabel}`
+
+  if (items.length === 0) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-50 w-full border-b bg-background">
+          <div className="container flex h-16 items-center justify-between">
+            <div className="hidden md:flex">
+              <MainNav />
+            </div>
+            <div className="md:hidden">
+              <MobileNav />
+            </div>
+            <CartButton />
+          </div>
+        </header>
+        <main className="flex-1">
+          <div className="container py-16 text-center space-y-6">
+            <h1 className="text-3xl font-bold">{t("checkout.emptyTitle")}</h1>
+            <p className="text-muted-foreground">{t("checkout.emptySubtitle")}</p>
+            <Link href="/menu">
+              <Button className="bg-red-600 hover:bg-red-700">{t("cart.browseMenu")}</Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -122,24 +152,27 @@ function OrderContent() {
           <div className="md:hidden">
             <MobileNav />
           </div>
+          <CartButton />
         </div>
       </header>
 
       <main className="flex-1">
         <div className="container py-8">
-          <h1 className="text-3xl font-bold mb-8">Complete Your Order</h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold">{t("checkout.title")}</h1>
+            <div className="text-sm text-muted-foreground">{selectedModeLabel}</div>
+          </div>
 
           <form onSubmit={(e) => onSubmit(e)} className="grid md:grid-cols-2 gap-8">
-            {/* Customer Information */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Customer Information</CardTitle>
+                  <CardTitle>{t("checkout.sections.customerInformation")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">{t("checkout.fields.firstName")}</Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
@@ -149,7 +182,7 @@ function OrderContent() {
                       {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">{t("checkout.fields.lastName")}</Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
@@ -161,7 +194,7 @@ function OrderContent() {
                   </div>
 
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("checkout.fields.email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -173,7 +206,7 @@ function OrderContent() {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">{t("checkout.fields.phone")}</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
@@ -185,10 +218,12 @@ function OrderContent() {
                 </CardContent>
               </Card>
 
-              {/* Delivery Address */}
-              <Card>
+              <Card className={isPickup ? "opacity-75" : ""}>
                 <CardHeader>
-                  <CardTitle>Delivery Address</CardTitle>
+                  <CardTitle>{t("checkout.sections.deliveryAddress")}</CardTitle>
+                  {isPickup && (
+                    <p className="text-sm text-muted-foreground">{t("checkout.pickupNotice")}</p>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -198,11 +233,12 @@ function OrderContent() {
                       value={formData.address}
                       onChange={(e) => handleInputChange("address", e.target.value)}
                       className={errors.address ? "border-red-500" : ""}
+                      disabled={isPickup}
                     />
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="city">{addressLabels.city}</Label>
                       <Input
@@ -210,6 +246,7 @@ function OrderContent() {
                         value={formData.city}
                         onChange={(e) => handleInputChange("city", e.target.value)}
                         className={errors.city ? "border-red-500" : ""}
+                        disabled={isPickup}
                       />
                       {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
@@ -220,6 +257,7 @@ function OrderContent() {
                         value={formData.zipCode}
                         onChange={(e) => handleInputChange("zipCode", e.target.value)}
                         className={errors.zipCode ? "border-red-500" : ""}
+                        disabled={isPickup}
                       />
                       {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
                     </div>
@@ -227,10 +265,9 @@ function OrderContent() {
                 </CardContent>
               </Card>
 
-              {/* Payment Method */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
+                  <CardTitle>{t("checkout.sections.paymentMethod")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -241,7 +278,7 @@ function OrderContent() {
                         checked={formData.paymentMethod === "card"}
                         onChange={() => handleInputChange("paymentMethod", "card")}
                       />
-                      <span>Credit/Debit Card</span>
+                      <span>{t("checkout.payment.card")}</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -250,17 +287,18 @@ function OrderContent() {
                         checked={formData.paymentMethod === "cash"}
                         onChange={() => handleInputChange("paymentMethod", "cash")}
                       />
-                      <span>Cash on Delivery</span>
+                      <span>{t("checkout.payment.cash")}</span>
                     </label>
+                    {errors.paymentMethod && <p className="text-red-500 text-sm mt-1">{errors.paymentMethod}</p>}
                   </div>
 
                   {formData.paymentMethod === "card" && (
                     <div className="space-y-4 pt-4 border-t">
                       <div>
-                        <Label htmlFor="cardNumber">Card Number</Label>
+                        <Label htmlFor="cardNumber">{t("checkout.fields.cardNumber")}</Label>
                         <Input
                           id="cardNumber"
-                          placeholder="1234 5678 9012 3456"
+                          placeholder={t("checkout.placeholders.cardNumber")}
                           value={formData.cardNumber}
                           onChange={(e) => handleInputChange("cardNumber", e.target.value)}
                           className={errors.cardNumber ? "border-red-500" : ""}
@@ -268,12 +306,12 @@ function OrderContent() {
                         {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="expiryDate">Expiry Date</Label>
+                          <Label htmlFor="expiryDate">{t("checkout.fields.expiryDate")}</Label>
                           <Input
                             id="expiryDate"
-                            placeholder="MM/YY"
+                            placeholder={t("checkout.placeholders.expiryDate")}
                             value={formData.expiryDate}
                             onChange={(e) => handleInputChange("expiryDate", e.target.value)}
                             className={errors.expiryDate ? "border-red-500" : ""}
@@ -283,10 +321,10 @@ function OrderContent() {
                           )}
                         </div>
                         <div>
-                          <Label htmlFor="cvv">CVV</Label>
+                          <Label htmlFor="cvv">{t("checkout.fields.cvv")}</Label>
                           <Input
                             id="cvv"
-                            placeholder="123"
+                            placeholder={t("checkout.placeholders.cvv")}
                             value={formData.cvv}
                             onChange={(e) => handleInputChange("cvv", e.target.value)}
                             className={errors.cvv ? "border-red-500" : ""}
@@ -300,13 +338,36 @@ function OrderContent() {
               </Card>
             </div>
 
-            {/* Order Summary */}
             <div>
               <Card className="sticky top-24">
                 <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+                  <CardTitle>{t("checkout.sections.orderSummary")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="flex gap-2" role="group" aria-label={t("cart.orderModeLabel")}>
+                    <Button
+                      type="button"
+                      variant={orderMode === "delivery" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => setOrderMode("delivery")}
+                    >
+                      {t("cart.delivery")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={orderMode === "pickup" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => setOrderMode("pickup")}
+                    >
+                      {t("cart.pickup")}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {orderMode === "delivery" ? t("cart.deliveryDescription") : t("cart.pickupDescription")}
+                  </p>
+
+                  <Separator />
+
                   <div className="space-y-2">
                     {orderItems.map((item) => (
                       <div key={item.id} className="flex justify-between">
@@ -344,8 +405,14 @@ function OrderContent() {
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Place Order"}
+                    {isSubmitting ? t("checkout.actions.processing") : t("checkout.actions.placeOrder")}
                   </Button>
+
+                  <Link href="/cart" className="block">
+                    <Button type="button" variant="outline" className="w-full">
+                      {t("checkout.actions.backToCart")}
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
@@ -360,8 +427,8 @@ function OrderContent() {
 
 export default function OrderClientPage() {
   return (
-    <LanguageProvider>
+    <AppProviders>
       <OrderContent />
-    </LanguageProvider>
+    </AppProviders>
   )
 }

@@ -9,6 +9,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -30,16 +32,21 @@ interface FoodCardProps {
 export function FoodCard({ item }: FoodCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const { addItem } = useCart()
 
-  const displayPrice = item.discount
-    ? (item.price - (item.price * item.discount) / 100).toFixed(2)
-    : item.price.toFixed(2)
+  const discountedPrice = item.discount
+    ? item.price - (item.price * item.discount) / 100
+    : item.price
+  const formattedPrice = formatCurrency(discountedPrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : undefined
 
   const handleAddToCart = () => {
+    addItem(item.id, 1)
     setIsAdding(true)
     setTimeout(() => setIsAdding(false), 1000)
-    // Add to cart logic would go here
   }
 
   return (
@@ -94,9 +101,9 @@ export function FoodCard({ item }: FoodCardProps) {
       </CardContent>
       <CardFooter className="flex justify-between items-center pt-0 pb-4">
         <div className="font-bold text-lg">
-          <span className="text-red-600">${displayPrice}</span>
-          {item.discount && (
-            <span className="text-sm text-muted-foreground line-through ml-2">${item.price.toFixed(2)}</span>
+          <span className="text-red-600">{formattedPrice}</span>
+          {formattedOriginalPrice && (
+            <span className="text-sm text-muted-foreground line-through ml-2">{formattedOriginalPrice}</span>
           )}
         </div>
         <div className="flex gap-2">

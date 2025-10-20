@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "tsx --test \"tests/**/*.test.ts\"",
     "type-check": "tsc --noEmit",
+    "test": "node --import tsx --test tests/menu-catalog.test.ts",
     "analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
@@ -40,9 +41,9 @@
     "clsx": "^2.0.0",
     "dotenv": "^16.5.0",
     "lucide-react": "^0.294.0",
-    "next": "^15.0.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "next": "15.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7"
   },
