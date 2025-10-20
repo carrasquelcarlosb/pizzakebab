@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import Link from "next/link"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InteractiveMenuCard } from "@/components/interactive-menu-card"
@@ -8,8 +8,9 @@ import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { useLanguage } from "@/contexts/language-context"
-import { AppProviders } from "@/contexts/app-providers"
-import { getLocalizedMenuSections } from "@/lib/menu-data"
+import { AppProviders } from "@/components/app-providers"
+import { CartButton } from "@/components/cart-button"
+import { Button } from "@/components/ui/button"
 
 function MenuContent() {
   const { t } = useLanguage()
@@ -25,6 +26,17 @@ function MenuContent() {
           </div>
           <div className="md:hidden">
             <MobileNav />
+          </div>
+          <div className="flex items-center gap-4">
+            <CartButton />
+            <Link href="/login">
+              <Button variant="outline" className="hidden md:inline-flex rounded-full">
+                {t("nav.signIn")}
+              </Button>
+            </Link>
+            <Link href="/order">
+              <Button className="bg-red-600 hover:bg-red-700 rounded-full">{t("nav.orderNow")}</Button>
+            </Link>
           </div>
         </div>
       </header>

@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { useCart } from "@/contexts/cart-context"
-import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -34,29 +33,30 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { t, language } = useLanguage()
-  const { addItem, getItemQuantity } = useCart()
-  const currentCartQuantity = getItemQuantity(item.id)
-  const [quantity, setQuantity] = useState(() => Math.max(1, currentCartQuantity))
+  const { t } = useLanguage()
+  const { addItem } = useCart()
 
-  useEffect(() => {
-    if (currentCartQuantity > 0) {
-      setQuantity(currentCartQuantity)
-    }
-  }, [currentCartQuantity])
-
-  const discountedPrice = item.discount
+  const effectivePrice = item.discount
     ? item.price - (item.price * item.discount) / 100
     : item.price
-  const formattedPrice = formatCurrency(discountedPrice, language)
-  const formattedOriginalPrice = item.discount
-    ? formatCurrency(item.price, language)
-    : undefined
+  const displayPrice = effectivePrice.toFixed(2)
 
   const handleAddToCart = () => {
     addItem(item.id, quantity)
     setIsAdding(true)
-    setTimeout(() => setIsAdding(false), 1500)
+    addItem(
+      {
+        id: item.id,
+        name: item.name,
+        price: Number(effectivePrice.toFixed(2)),
+        image: item.image,
+      },
+      quantity,
+    )
+    setTimeout(() => {
+      setIsAdding(false)
+      setQuantity(1)
+    }, 1200)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -177,7 +177,7 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
           )}
         >
-          <span className="text-sm text-gray-600">Qty:</span>
+          <span className="text-sm text-gray-600">{t("cart.quantity")}:</span>
           <div className="flex items-center border rounded-full">
             <Button
               size="sm"
@@ -214,26 +214,18 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
               {t("common.inCart")}: {quantityInCart}
             </Badge>
           )}
-          <Button
-            className={cn(
-              "rounded-full px-6 transition-all duration-300 transform hover:scale-105 shadow-lg",
-              isRecentlyAdded
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700",
-            )}
-            onClick={handleAddToCart}
-          >
+          onClick={handleAddToCart}
+          disabled={isAdding}
+        >
+          {isAdding ? (
             <div className="flex items-center gap-2">
-              {isRecentlyAdded ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <ShoppingCart className="h-4 w-4" />
-              )}
-              {isRecentlyAdded
-                ? t("common.added")
-                : isInCart
-                  ? t("common.updateCart")
-                  : t("common.addToCart")}
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              {t("cart.added")}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              {t("cart.addToCart")}
             </div>
           </Button>
         </div>
