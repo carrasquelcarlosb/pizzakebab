@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
 
 interface FoodItem {
   id: number
@@ -35,15 +36,28 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [quantity, setQuantity] = useState(1)
   const cardRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
+  const { addItem } = useCart()
 
-  const displayPrice = item.discount
-    ? (item.price - (item.price * item.discount) / 100).toFixed(2)
-    : item.price.toFixed(2)
+  const effectivePrice = item.discount
+    ? item.price - (item.price * item.discount) / 100
+    : item.price
+  const displayPrice = effectivePrice.toFixed(2)
 
   const handleAddToCart = () => {
     setIsAdding(true)
-    setTimeout(() => setIsAdding(false), 1500)
-    // Add to cart logic would go here
+    addItem(
+      {
+        id: item.id,
+        name: item.name,
+        price: Number(effectivePrice.toFixed(2)),
+        image: item.image,
+      },
+      quantity,
+    )
+    setTimeout(() => {
+      setIsAdding(false)
+      setQuantity(1)
+    }, 1200)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -164,7 +178,7 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
             isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
           )}
         >
-          <span className="text-sm text-gray-600">Qty:</span>
+          <span className="text-sm text-gray-600">{t("cart.quantity")}:</span>
           <div className="flex items-center border rounded-full">
             <Button
               size="sm"
@@ -206,12 +220,12 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
           {isAdding ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Added!
+              {t("cart.added")}
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" />
-              Add to Cart
+              {t("cart.addToCart")}
             </div>
           )}
         </Button>

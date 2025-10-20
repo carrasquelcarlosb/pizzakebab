@@ -3,7 +3,7 @@ import { InteractiveMenuCard } from "@/components/interactive-menu-card"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { LanguageProvider } from "@/contexts/language-context"
+import { AppProviders } from "@/components/app-providers"
 
 // Next.js 15: params is now a Promise
 type Props = {
@@ -57,7 +57,7 @@ export default async function CategoryPage(props: Props) {
   const items = categoryItems[category as keyof typeof categoryItems] || []
 
   return (
-    <LanguageProvider>
+    <AppProviders>
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-background">
           <div className="container flex h-16 items-center justify-between">
@@ -100,7 +100,7 @@ export default async function CategoryPage(props: Props) {
         </main>
         <Footer />
       </div>
-    </LanguageProvider>
+    </AppProviders>
   )
 }
 
