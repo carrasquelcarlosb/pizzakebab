@@ -20,18 +20,42 @@ import { CartButton } from "@/components/cart-button"
 import { formatCurrency } from "@/lib/cart"
 
 interface OrderForm {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  zipCode: string
-  paymentMethod: string
-  cardNumber?: string
-  expiryDate?: string
-  cvv?: string
-}
+   firstName: string
+   lastName: string
+   email: string
+   phone: string
+   address: string
+   city: string
+   zipCode: string
+   paymentMethod: PaymentMethod | ""
+   cardNumber?: string
+   expiryDate?: string
+   cvv?: string
+ }
+
+interface ResolvedSummaryLine {
+   id: number
+   quantity: number
+   item: LocalizedMenuItem
+ }
+
+type OrderField = keyof OrderForm
+
+const errorTranslationKeys: Record<OrderField, TranslationKey> = {
+   firstName: "orderPage.errors.firstName",
+   lastName: "orderPage.errors.lastName",
+   email: "orderPage.errors.email",
+   phone: "orderPage.errors.phone",
+   address: "orderPage.errors.address",
+   city: "orderPage.errors.city",
+   zipCode: "orderPage.errors.zipCode",
+   paymentMethod: "orderPage.errors.paymentMethod",
+   cardNumber: "orderPage.errors.cardNumber",
+   expiryDate: "orderPage.errors.expiryDate",
+   cvv: "orderPage.errors.cvv",
+ }
+
+const cardSpecificFields: OrderField[] = ["cardNumber", "expiryDate", "cvv"]
 
 const localeMap: Record<string, string> = {
   en: "en-US",

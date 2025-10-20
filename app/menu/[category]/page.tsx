@@ -5,56 +5,22 @@ import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
 import { AppProviders } from "@/components/app-providers"
 
-// Next.js 15: params is now a Promise
 type Props = {
   params: Promise<{ category: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-const validCategories = ["pizzas", "kebabs", "wraps", "sides", "drinks", "desserts"]
-
-const categoryItems = {
-  pizzas: [
-    {
-      id: 101,
-      name: "Spicy Kebab Pizza",
-      description: "Our signature pizza topped with juicy kebab meat, jalapeños, and special spicy sauce",
-      price: 14.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: "Specialty Pizzas",
-      rating: 4.8,
-      popular: true,
-    },
-    // Add more items...
-  ],
-  kebabs: [
-    {
-      id: 201,
-      name: "Mixed Grill Kebab",
-      description: "A delicious mix of chicken, beef, and lamb kebab with grilled vegetables",
-      price: 16.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: "Kebabs",
-      rating: 4.7,
-    },
-    // Add more items...
-  ],
-  // Add other categories...
-}
-
 export default async function CategoryPage(props: Props) {
-  // Next.js 15: Await the params
   const params = await props.params
-  const searchParams = await props.searchParams
+  await props.searchParams
 
-  const { category } = params
-  const { sort, filter } = searchParams
+  const categoryParam = params.category as MenuCategory
 
-  if (!validCategories.includes(category)) {
+  if (!validMenuCategories.includes(category)) {
     notFound()
   }
 
-  const items = categoryItems[category as keyof typeof categoryItems] || []
+  const items = menuCatalog[category] || []
 
   return (
     <AppProviders>
@@ -104,20 +70,20 @@ export default async function CategoryPage(props: Props) {
   )
 }
 
-// Next.js 15: generateStaticParams for static generation
 export async function generateStaticParams() {
-  return validCategories.map((category) => ({
+  return validMenuCategories.map((category) => ({
     category,
   }))
 }
 
-// Next.js 15: generateMetadata with async params
 export async function generateMetadata(props: Props) {
   const params = await props.params
   const { category } = params
 
+  const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1)
+
   return {
-    title: `${category.charAt(0).toUpperCase() + category.slice(1)} - PizzaKebab`,
+    title: `${capitalizedCategory} - PizzaKebab`,
     description: `Explore our delicious ${category} menu at PizzaKebab.`,
   }
 }

@@ -6,53 +6,43 @@ import { ArrowRight, Flame } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
+import {
+  getMenuCategoryCount,
+  getMenuCategoryLabelKey,
+  type MenuCategory,
+} from "@/lib/menu-data"
 
 export function CategorySection() {
   const { t } = useLanguage()
 
+  const coreCategories: Array<{ key: MenuCategory; featured?: boolean }> = [
+    { key: "pizzas", featured: true },
+    { key: "kebabs", featured: true },
+    { key: "wraps" },
+    { key: "sides" },
+  ]
+
   const categories = [
-    {
-      id: 1,
-      name: t("categories.pizzas"),
+    ...coreCategories.map(({ key, featured }) => ({
+      id: key,
+      name: t(getMenuCategoryLabelKey(key)),
       image: "/placeholder.svg?height=400&width=400",
-      count: 12,
-      href: "/menu/pizzas",
-      featured: true,
-    },
+      count: getMenuCategoryCount(key),
+      href: `/menu/${key}`,
+      featured,
+    })),
     {
-      id: 2,
-      name: t("categories.kebabs"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 8,
-      href: "/menu/kebabs",
-      featured: true,
-    },
-    {
-      id: 3,
-      name: t("categories.wraps"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 6,
-      href: "/menu/wraps",
-    },
-    {
-      id: 4,
-      name: t("categories.sides"),
-      image: "/placeholder.svg?height=400&width=400",
-      count: 10,
-      href: "/menu/sides",
-    },
-    {
-      id: 5,
+      id: "drinks",
       name: t("categories.drinks"),
       image: "/placeholder.svg?height=400&width=400",
-      count: 15,
+      count: 6,
       href: "/menu/drinks",
     },
     {
-      id: 6,
+      id: "desserts",
       name: t("categories.desserts"),
       image: "/placeholder.svg?height=400&width=400",
-      count: 7,
+      count: 4,
       href: "/menu/desserts",
     },
   ]
