@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { ShoppingCart, Star, Heart, Share2 } from "lucide-react"
+import { ShoppingCart, Star, Heart, Share2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -32,7 +32,6 @@ interface InteractiveMenuCardProps {
 
 export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const { t, language } = useLanguage()
@@ -209,26 +208,35 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
           )}
         </div>
 
-        <Button
-          className={cn(
-            "rounded-full px-6 transition-all duration-300 transform hover:scale-105 shadow-lg",
-            isAdding ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700",
+        <div className="flex items-center gap-3">
+          {isInCart && (
+            <Badge className="bg-green-100 text-green-700 border-green-200">
+              {t("common.inCart")}: {quantityInCart}
+            </Badge>
           )}
-          onClick={handleAddToCart}
-          disabled={isAdding}
-        >
-          {isAdding ? (
+          <Button
+            className={cn(
+              "rounded-full px-6 transition-all duration-300 transform hover:scale-105 shadow-lg",
+              isRecentlyAdded
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700",
+            )}
+            onClick={handleAddToCart}
+          >
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Added!
+              {isRecentlyAdded ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
+              {isRecentlyAdded
+                ? t("common.added")
+                : isInCart
+                  ? t("common.updateCart")
+                  : t("common.addToCart")}
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              Add to Cart
-            </div>
-          )}
-        </Button>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )
