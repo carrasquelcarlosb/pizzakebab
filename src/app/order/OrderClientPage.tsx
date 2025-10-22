@@ -13,9 +13,11 @@ import { Separator } from "@/components/ui/separator"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { LanguageProvider, useLanguage } from "@/contexts/language-context"
-import { calculatePricingBreakdown } from "@/lib/pricing"
-import { sampleCartItems } from "@/lib/sample-cart-items"
+import { AppProviders } from "@/components/app-providers"
+import { CartButton } from "@/components/cart-button"
+import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
+import { formatCurrency as formatMenuCurrency } from "@/lib/menu-data"
 import { getAddressLabels, validateAddressFields, type AddressFields } from "@/lib/address"
 
 interface OrderForm extends AddressFields {
@@ -33,7 +35,17 @@ type OrderFormErrors = Partial<Record<keyof OrderForm, string>>
 
 function OrderContent() {
   const { t, language } = useLanguage()
-  const { items, subtotal, deliveryFee, total, orderMode, setOrderMode } = useCart()
+  const {
+    items,
+    subtotal,
+    deliveryFee,
+    discount,
+    total,
+    orderMode,
+    setOrderMode,
+    submitCurrentOrder,
+    isLoading,
+  } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<OrderForm>({
     firstName: "",
@@ -50,8 +62,6 @@ function OrderContent() {
   })
   const [errors, setErrors] = useState<OrderFormErrors>({})
   const addressLabels = getAddressLabels(t)
-  const orderItems = sampleCartItems
-  const pricing = calculatePricingBreakdown(orderItems)
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -90,15 +100,21 @@ function OrderContent() {
     return Object.keys(newErrors).length === 0
   }
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
 
     if (!validateForm()) return
 
     setIsSubmitting(true)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await submitCurrentOrder({
+        customer: {
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          phone: formData.phone.trim() || undefined,
+          email: formData.email.trim() || undefined,
+        },
+      })
       alert(t("checkout.success"))
     } catch (error) {
       console.error("Order submission failed:", error)
@@ -113,6 +129,29 @@ function OrderContent() {
     [orderMode, t],
   )
   const selectedModeLabel = `${t("checkout.selectedModePrefix")} ${orderModeLabel}`
+  const isPickup = orderMode === "pickup"
+  const formatCurrency = (value: number) => formatMenuCurrency(value, language)
+
+  if (isLoading && items.length === 0) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-50 w-full border-b bg-background">
+          <div className="container flex h-16 items-center justify-between">
+            <div className="hidden md:flex">
+              <MainNav />
+            </div>
+            <div className="md:hidden">
+              <MobileNav />
+            </div>
+          </div>
+        </header>
+        <main className="flex-1">
+          <div className="container py-16 text-center text-muted-foreground">Loading order…</div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   if (items.length === 0) {
     return (
@@ -163,7 +202,7 @@ function OrderContent() {
             <div className="text-sm text-muted-foreground">{selectedModeLabel}</div>
           </div>
 
-          <form onSubmit={(e) => onSubmit(e)} className="grid md:grid-cols-2 gap-8">
+          <form onSubmit={(event) => onSubmit(event)} className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -176,7 +215,7 @@ function OrderContent() {
                       <Input
                         id="firstName"
                         value={formData.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        onChange={(event) => handleInputChange("firstName", event.target.value)}
                         className={errors.firstName ? "border-red-500" : ""}
                       />
                       {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
@@ -186,7 +225,7 @@ function OrderContent() {
                       <Input
                         id="lastName"
                         value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        onChange={(event) => handleInputChange("lastName", event.target.value)}
                         className={errors.lastName ? "border-red-500" : ""}
                       />
                       {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
@@ -199,7 +238,7 @@ function OrderContent() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      onChange={(event) => handleInputChange("email", event.target.value)}
                       className={errors.email ? "border-red-500" : ""}
                     />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -210,7 +249,7 @@ function OrderContent() {
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      onChange={(event) => handleInputChange("phone", event.target.value)}
                       className={errors.phone ? "border-red-500" : ""}
                     />
                     {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -221,9 +260,7 @@ function OrderContent() {
               <Card className={isPickup ? "opacity-75" : ""}>
                 <CardHeader>
                   <CardTitle>{t("checkout.sections.deliveryAddress")}</CardTitle>
-                  {isPickup && (
-                    <p className="text-sm text-muted-foreground">{t("checkout.pickupNotice")}</p>
-                  )}
+                  {isPickup && <p className="text-sm text-muted-foreground">{t("checkout.pickupNotice")}</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -231,7 +268,7 @@ function OrderContent() {
                     <Input
                       id="address"
                       value={formData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
+                      onChange={(event) => handleInputChange("address", event.target.value)}
                       className={errors.address ? "border-red-500" : ""}
                       disabled={isPickup}
                     />
@@ -244,7 +281,7 @@ function OrderContent() {
                       <Input
                         id="city"
                         value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
+                        onChange={(event) => handleInputChange("city", event.target.value)}
                         className={errors.city ? "border-red-500" : ""}
                         disabled={isPickup}
                       />
@@ -255,7 +292,7 @@ function OrderContent() {
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
-                        onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                        onChange={(event) => handleInputChange("zipCode", event.target.value)}
                         className={errors.zipCode ? "border-red-500" : ""}
                         disabled={isPickup}
                       />
@@ -300,7 +337,7 @@ function OrderContent() {
                           id="cardNumber"
                           placeholder={t("checkout.placeholders.cardNumber")}
                           value={formData.cardNumber}
-                          onChange={(e) => handleInputChange("cardNumber", e.target.value)}
+                          onChange={(event) => handleInputChange("cardNumber", event.target.value)}
                           className={errors.cardNumber ? "border-red-500" : ""}
                         />
                         {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>}
@@ -313,12 +350,10 @@ function OrderContent() {
                             id="expiryDate"
                             placeholder={t("checkout.placeholders.expiryDate")}
                             value={formData.expiryDate}
-                            onChange={(e) => handleInputChange("expiryDate", e.target.value)}
+                            onChange={(event) => handleInputChange("expiryDate", event.target.value)}
                             className={errors.expiryDate ? "border-red-500" : ""}
                           />
-                          {errors.expiryDate && (
-                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
-                          )}
+                          {errors.expiryDate && <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>}
                         </div>
                         <div>
                           <Label htmlFor="cvv">{t("checkout.fields.cvv")}</Label>
@@ -326,7 +361,7 @@ function OrderContent() {
                             id="cvv"
                             placeholder={t("checkout.placeholders.cvv")}
                             value={formData.cvv}
-                            onChange={(e) => handleInputChange("cvv", e.target.value)}
+                            onChange={(event) => handleInputChange("cvv", event.target.value)}
                             className={errors.cvv ? "border-red-500" : ""}
                           />
                           {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
@@ -369,13 +404,13 @@ function OrderContent() {
                   <Separator />
 
                   <div className="space-y-2">
-                    {orderItems.map((item) => (
+                    {items.map((item) => (
                       <div key={item.id} className="flex justify-between">
                         <span>
                           {item.name}
                           {item.quantity > 1 ? ` ×${item.quantity}` : ""}
                         </span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span>{formatCurrency(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
@@ -385,23 +420,25 @@ function OrderContent() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>{t("cart.subtotal")}</span>
-                      <span>${pricing.subtotal.toFixed(2)}</span>
+                      <span>{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t("cart.deliveryFee")}</span>
-                      <span>${pricing.deliveryFee.toFixed(2)}</span>
+                      <span>{formatCurrency(deliveryFee)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{t("cart.tax")}</span>
-                      <span>${pricing.tax.toFixed(2)}</span>
-                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span>-{formatCurrency(discount)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between font-bold text-lg">
                     <span>{t("cart.total")}</span>
-                    <span>${pricing.total.toFixed(2)}</span>
+                    <span>{formatCurrency(total)}</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
@@ -432,3 +469,4 @@ export default function OrderClientPage() {
     </AppProviders>
   )
 }
+

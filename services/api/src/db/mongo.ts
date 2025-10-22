@@ -44,85 +44,13 @@ export type TenantCollection<TSchema extends Document> = {
 const createTenantCollection = <TSchema extends { tenantId: string } & Document>(
   collection: Collection<TSchema>,
   tenantId: string,
-): TenantCollection<TSchema> => {
-  const buildScopedFilter = (filter: Filter<TSchema> = {} as Filter<TSchema>): Filter<TSchema> => {
-    if (filter && typeof filter === 'object' && !Array.isArray(filter)) {
-      const sanitizedFilter = { ...(filter as Record<string, unknown>) };
-      delete (sanitizedFilter as { tenantId?: unknown }).tenantId;
-      return { ...(sanitizedFilter as Filter<TSchema>), tenantId } as Filter<TSchema>;
-    }
-    return { tenantId } as Filter<TSchema>;
-  };
-
-  const sanitizeUpdatePayload = (
-    update: UpdateFilter<TSchema>,
-  ): UpdateFilter<TSchema> => {
-    const protectedKeys = new Set(['tenantId', 'resourceId']);
-
-    if (update && typeof update === 'object' && !Array.isArray(update)) {
-      const clonedUpdate = { ...(update as Record<string, unknown>) };
-      const modifierKeys = Object.keys(clonedUpdate).filter((key) => key.startsWith('$'));
-
-      if (modifierKeys.length === 0) {
-        protectedKeys.forEach((key) => {
-          if (key in clonedUpdate) {
-            delete clonedUpdate[key];
-          }
-        });
-        return clonedUpdate as UpdateFilter<TSchema>;
-      }
-
-      modifierKeys.forEach((modifierKey) => {
-        const modifierValue = clonedUpdate[modifierKey];
-        if (modifierValue && typeof modifierValue === 'object' && !Array.isArray(modifierValue)) {
-          const clonedModifier = { ...(modifierValue as Record<string, unknown>) };
-          let mutated = false;
-
-          protectedKeys.forEach((key) => {
-            if (key in clonedModifier) {
-              delete clonedModifier[key];
-              mutated = true;
-            }
-          });
-
-          if (mutated) {
-            clonedUpdate[modifierKey] = clonedModifier;
-          }
-        }
-      });
-
-      return clonedUpdate as UpdateFilter<TSchema>;
-    }
-
-    return update;
-  };
-
-  const appendUpdatedTimestamp = (
-    update: UpdateFilter<TSchema>,
-  ): UpdateFilter<TSchema> => {
-    const timestamp = new Date();
-
-    if (typeof update === 'object' && update !== null && !Array.isArray(update)) {
-      const modifierKeys = Object.keys(update).filter((key) => key.startsWith('$'));
-
-      if (modifierKeys.length === 0) {
-        return { ...(update as Record<string, unknown>), updatedAt: timestamp } as UpdateFilter<TSchema>;
-      }
-
-      const $set = { ...((update as UpdateFilter<TSchema>).$set ?? {}), updatedAt: timestamp };
-      return { ...(update as UpdateFilter<TSchema>), $set };
-    }
-
-    return update;
-  };
-
-  return {
-    find(filter = {}, options) {
-      return collection.find(buildScopedFilter(filter), options);
-    },
-    findOne(filter = {}, options) {
-      return collection.findOne(buildScopedFilter(filter), options);
-    },
+): TenantCollection<TSchema> => ({
+  find(filter = {}, options) {
+    return collection.find({ tenantId, ...filter } as Filter<TSchema>, options);
+  },
+  findOne(filter = {}, options) {
+    return collection.findOne({ tenantId, ...filter } as Filter<TSchema>, options);
+  },
   insertOne(document) {
     const now = new Date();
     const payload = {
@@ -134,16 +62,25 @@ const createTenantCollection = <TSchema extends { tenantId: string } & Document>
     return collection.insertOne(payload as OptionalUnlessRequiredId<TSchema>);
   },
   updateOne(filter, update, options) {
-    const sanitizedUpdate = sanitizeUpdatePayload(update);
-    const updateWithTimestamp = appendUpdatedTimestamp(sanitizedUpdate);
+    const updateWithTimestamp = (() => {
+      const timestamp = new Date();
+      if (typeof update === 'object' && update !== null && !Array.isArray(update)) {
+        const modifierKeys = Object.keys(update).filter((key) => key.startsWith('$'));
+        if (modifierKeys.length === 0) {
+          return { ...(update as Record<string, unknown>), updatedAt: timestamp } as UpdateFilter<TSchema>;
+        }
+        const $set = { ...((update as UpdateFilter<TSchema>).$set ?? {}), updatedAt: timestamp };
+        return { ...(update as UpdateFilter<TSchema>), $set };
+      }
+      return update;
+    })();
 
-    return collection.updateOne(buildScopedFilter(filter), updateWithTimestamp, options);
+    return collection.updateOne({ tenantId, ...filter } as Filter<TSchema>, updateWithTimestamp, options);
   },
   deleteOne(filter = {}, options) {
-    return collection.deleteOne(buildScopedFilter(filter), options);
+    return collection.deleteOne({ tenantId, ...filter } as Filter<TSchema>, options);
   },
-  };
-};
+});
 
 export type TenantCollections = {
   [K in keyof TenantCollectionsShape]: TenantCollection<TenantCollectionsShape[K]>;

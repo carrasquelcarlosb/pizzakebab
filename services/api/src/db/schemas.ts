@@ -8,6 +8,7 @@ export interface BaseDocument {
 export interface MenuDocument extends BaseDocument {
   name: string;
   description?: string;
+  translationKey?: string;
   isActive: boolean;
 }
 
@@ -15,9 +16,17 @@ export interface MenuItemDocument extends BaseDocument {
   menuId: string;
   name: string;
   description?: string;
+  nameKey?: string;
+  descriptionKey?: string;
+  categoryKey?: string;
   price: number;
   currency: string;
   isAvailable: boolean;
+  imageUrl?: string;
+  rating?: number;
+  discountPercentage?: number;
+  isPopular?: boolean;
+  isNew?: boolean;
 }
 
 export interface CartItem {
@@ -28,8 +37,11 @@ export interface CartItem {
 
 export interface CartDocument extends BaseDocument {
   deviceId: string;
+  sessionId?: string;
+  userId?: string;
   status: 'open' | 'checked_out';
   items: CartItem[];
+  promoCode?: string | null;
 }
 
 export interface OrderDocument extends BaseDocument {
@@ -38,6 +50,16 @@ export interface OrderDocument extends BaseDocument {
   total: number;
   currency: string;
   submittedAt: Date;
+  promoCode?: string | null;
+  items: CartItem[];
+  deliveryFee?: number;
+  discountTotal?: number;
+  customer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  notes?: string;
 }
 
 export interface DeviceDocument extends BaseDocument {
