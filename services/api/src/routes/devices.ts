@@ -138,7 +138,7 @@ export default async function devicesRoutes(app: FastifyInstance): Promise<void>
       const { deviceId, label, type, capabilities, hardwareId, metadata } = request.body;
       const collections = await request.getTenantCollections();
       const now = new Date();
-      const normalizedCapabilities = Array.from(new Set(capabilities));
+      const normalizedCapabilities = Array.from(new Set(capabilities ?? [])) as string[];
 
       let existing = null;
       if (hardwareId) {

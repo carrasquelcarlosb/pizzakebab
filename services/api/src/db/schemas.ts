@@ -1,4 +1,6 @@
-export interface BaseDocument {
+import type { Document } from 'mongodb';
+
+export interface BaseDocument extends Document {
   tenantId: string;
   resourceId: string;
   createdAt: Date;

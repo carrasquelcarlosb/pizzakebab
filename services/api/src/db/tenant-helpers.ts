@@ -62,12 +62,12 @@ export const appendUpdatedTimestamp = <UpdateShape extends UpdateLike>(
     const modifierKeys = Object.keys(update).filter((key) => key.startsWith('$'));
 
     if (modifierKeys.length === 0) {
-      return { ...(update as AnyRecord), updatedAt: timestamp } as UpdateShape;
+      return { ...(update as AnyRecord), updatedAt: timestamp } as unknown as UpdateShape;
     }
 
     const currentSet = ((update as AnyRecord)['$set'] ?? {}) as AnyRecord;
     const $set = { ...currentSet, updatedAt: timestamp };
-    return { ...(update as AnyRecord), $set } as UpdateShape;
+    return { ...(update as AnyRecord), $set } as unknown as UpdateShape;
   }
 
   return update;
