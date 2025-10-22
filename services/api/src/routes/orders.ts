@@ -151,10 +151,9 @@ export default async function ordersRoutes(app: FastifyInstance): Promise<void> 
         { $set: { status: 'checked_out' } },
       );
 
-      await enqueueKitchenTicket(request.log, {
+      await enqueueKitchenTicket(request.tenantId, collections, request.log, {
         orderId: resourceId,
         cartId,
-        tenantId: request.tenantId,
         items: summary.items,
         totals: summary.totals,
         customer,

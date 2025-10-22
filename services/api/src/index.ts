@@ -8,7 +8,9 @@ import menusRoutes from './routes/menus';
 import cartsRoutes from './routes/carts';
 import ordersRoutes from './routes/orders';
 import adminRoutes from './routes/admin';
+import devicesRoutes from './routes/devices';
 import authPlugin from './plugins/auth';
+import { startPrintServiceWorker } from './services/print-service';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -31,6 +33,9 @@ export const buildServer = (): FastifyInstance => {
   app.register(cartsRoutes);
   app.register(ordersRoutes);
   app.register(adminRoutes);
+  app.register(devicesRoutes);
+
+  startPrintServiceWorker(app);
 
   app.get('/healthz', async () => ({ status: 'ok' }));
 
