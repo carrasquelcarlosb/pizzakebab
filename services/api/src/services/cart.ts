@@ -57,9 +57,9 @@ const hydrateCartItems = async (
   }
 
   const menuItemIds = sanitized.map((item) => item.menuItemId);
-  const menuItems = await collections.menuItems
+  const menuItems = (await collections.menuItems
     .find({ resourceId: { $in: menuItemIds } } as Filter<MenuItemDocument>)
-    .toArray();
+    .toArray()) as MenuItemDocument[];
 
   const menuItemMap = new Map(menuItems.map((doc) => [doc.resourceId, doc]));
 

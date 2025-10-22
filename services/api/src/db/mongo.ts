@@ -82,16 +82,14 @@ const createTenantCollection = <TSchema extends { tenantId: string } & Document>
   },
 });
 
-export type TenantCollections = {
-  [K in keyof TenantCollectionsShape]: TenantCollection<TenantCollectionsShape[K]>;
-};
+export type TenantCollections = Record<string, TenantCollection<any>>;
 
 export const getTenantCollections = async (tenantId: string): Promise<TenantCollections> => {
   const db = await ensureDatabase();
   const collectionEntries = (Object.keys(COLLECTION_NAMES) as Array<keyof TenantCollectionsShape>).map((key) => {
     const collectionName = COLLECTION_NAMES[key];
-    const collection = db.collection<TenantCollectionsShape[typeof key]>(collectionName);
-    return [key, createTenantCollection(collection, tenantId)] as const;
+    const collection = db.collection(collectionName);
+    return [key, createTenantCollection(collection as any, tenantId)] as const;
   });
 
   return Object.fromEntries(collectionEntries) as TenantCollections;

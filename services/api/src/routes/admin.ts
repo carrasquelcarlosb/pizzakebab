@@ -1,7 +1,14 @@
 import { FastifyInstance } from 'fastify';
 import { randomUUID } from 'crypto';
 import { verifyPassword } from '../services/password';
-import { MenuDocument, MenuItemDocument, PricingOverrideDocument, OperatingHourDocument, ReportDocument } from '../db/schemas';
+import {
+  MenuDocument,
+  MenuItemDocument,
+  PricingOverrideDocument,
+  OperatingHourDocument,
+  ReportDocument,
+  DeviceDocument,
+} from '../db/schemas';
 import type { TenantCollections } from '../db/mongo';
 
 const adminUserResponseSchema = {
@@ -113,11 +120,29 @@ const deviceInputSchema = {
   properties: {
     id: { type: ['string', 'null'] },
     label: { type: 'string' },
-    type: { type: 'string', enum: ['kiosk', 'tablet', 'mobile'] },
+    type: { type: 'string', enum: ['kiosk', 'tablet', 'mobile', 'printer'] },
+    capabilities: {
+      type: 'array',
+      items: { type: 'string' },
+      minItems: 1,
+    },
+    hardwareId: { type: ['string', 'null'] },
+    status: { type: 'string', enum: ['online', 'offline'] },
   },
-  required: ['label', 'type'],
+  required: ['label', 'type', 'capabilities'],
   additionalProperties: false,
 } as const;
+
+const formatAdminDevice = (device: DeviceDocument) => ({
+  id: device.resourceId,
+  label: device.label,
+  type: device.type,
+  capabilities: device.capabilities,
+  status: device.status ?? 'offline',
+  hardwareId: device.hardwareId ?? null,
+  lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
+  lastHeartbeatAt: device.lastHeartbeatAt?.toISOString() ?? null,
+});
 
 const parseDate = (value: string | null | undefined): Date | undefined => {
   if (!value) {
@@ -632,12 +657,7 @@ export default async function adminRoutes(app: FastifyInstance): Promise<void> {
       const collections = await request.getTenantCollections();
       const devices = await collections.devices.find({}).toArray();
       return {
-        devices: devices.map((device) => ({
-          id: device.resourceId,
-          label: device.label,
-          type: device.type,
-          lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
-        })),
+        devices: devices.map((device) => formatAdminDevice(device)),
       };
     },
   );
@@ -647,27 +667,39 @@ export default async function adminRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: app.authenticate, schema: { body: deviceInputSchema } },
     async (request, reply) => {
       const collections = await request.getTenantCollections();
-      const body = request.body as { id?: string | null; label: string; type: 'kiosk' | 'tablet' | 'mobile' };
+      const body = request.body as {
+        id?: string | null;
+        label: string;
+        type: DeviceDocument['type'];
+        capabilities: string[];
+        hardwareId?: string | null;
+        status?: 'online' | 'offline';
+      };
       const resourceId = body.id && body.id.length > 0 ? body.id : randomUUID();
+      const now = new Date();
+      const setPayload: Partial<DeviceDocument> = {
+        label: body.label,
+        type: body.type,
+        capabilities: body.capabilities,
+        hardwareId: body.hardwareId ?? undefined,
+      };
+
+      if (body.status) {
+        setPayload.status = body.status;
+      }
+
       await collections.devices.updateOne(
         { resourceId },
         {
-          $setOnInsert: { resourceId, createdAt: new Date() },
-          $set: { label: body.label, type: body.type },
+          $setOnInsert: { resourceId, createdAt: now, status: body.status ?? 'offline' },
+          $set: setPayload,
         },
         { upsert: true },
       );
       const device = await collections.devices.findOne({ resourceId });
       reply.code(201);
       return {
-        device: device
-          ? {
-              id: device.resourceId,
-              label: device.label,
-              type: device.type,
-              lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
-            }
-          : null,
+        device: device ? formatAdminDevice(device) : null,
       };
     },
   );
@@ -678,21 +710,31 @@ export default async function adminRoutes(app: FastifyInstance): Promise<void> {
     async (request) => {
       const { deviceId } = request.params as { deviceId: string };
       const collections = await request.getTenantCollections();
-      const body = request.body as { label: string; type: 'kiosk' | 'tablet' | 'mobile' };
+      const body = request.body as {
+        label: string;
+        type: DeviceDocument['type'];
+        capabilities: string[];
+        hardwareId?: string | null;
+        status?: 'online' | 'offline';
+      };
+      const updatePayload: Partial<DeviceDocument> = {
+        label: body.label,
+        type: body.type,
+        capabilities: body.capabilities,
+        hardwareId: body.hardwareId ?? undefined,
+      };
+
+      if (body.status) {
+        updatePayload.status = body.status;
+      }
+
       await collections.devices.updateOne(
         { resourceId: deviceId },
-        { $set: { label: body.label, type: body.type } },
+        { $set: updatePayload },
       );
       const device = await collections.devices.findOne({ resourceId: deviceId });
       return {
-        device: device
-          ? {
-              id: device.resourceId,
-              label: device.label,
-              type: device.type,
-              lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
-            }
-          : null,
+        device: device ? formatAdminDevice(device) : null,
       };
     },
   );
@@ -706,18 +748,11 @@ export default async function adminRoutes(app: FastifyInstance): Promise<void> {
       const now = new Date();
       await collections.devices.updateOne(
         { resourceId: deviceId },
-        { $set: { lastSeenAt: now } },
+        { $set: { lastSeenAt: now, lastHeartbeatAt: now, status: 'online' } },
       );
       const device = await collections.devices.findOne({ resourceId: deviceId });
       return {
-        device: device
-          ? {
-              id: device.resourceId,
-              label: device.label,
-              type: device.type,
-              lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
-            }
-          : null,
+        device: device ? formatAdminDevice(device) : null,
       };
     },
   );

@@ -1,4 +1,6 @@
-export interface BaseDocument {
+import type { Document } from 'mongodb';
+
+export interface BaseDocument extends Document {
   tenantId: string;
   resourceId: string;
   createdAt: Date;
@@ -44,6 +46,29 @@ export interface CartDocument extends BaseDocument {
   promoCode?: string | null;
 }
 
+export interface KitchenTicketItem extends CartItem {
+  menuItem?: {
+    id: string;
+    menuId?: string;
+    name: string;
+    nameKey?: string;
+    description?: string;
+    descriptionKey?: string;
+    categoryKey?: string;
+    price: number;
+    currency: string;
+    imageUrl?: string;
+  };
+}
+
+export interface KitchenTicketTotals {
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
+  total: number;
+  currency: string;
+}
+
 export interface OrderDocument extends BaseDocument {
   cartId: string;
   status: 'pending' | 'confirmed' | 'prepared' | 'delivered' | 'cancelled';
@@ -64,8 +89,42 @@ export interface OrderDocument extends BaseDocument {
 
 export interface DeviceDocument extends BaseDocument {
   label: string;
-  type: 'kiosk' | 'tablet' | 'mobile';
+  type: 'kiosk' | 'tablet' | 'mobile' | 'printer';
+  capabilities: string[];
+  hardwareId?: string;
+  metadata?: Record<string, unknown>;
+  status?: 'online' | 'offline';
   lastSeenAt?: Date;
+  lastHeartbeatAt?: Date;
+  metrics?: Record<string, unknown>;
+}
+
+export interface KitchenTicketDocument extends BaseDocument {
+  orderId: string;
+  cartId: string;
+  status: 'pending' | 'acknowledged' | 'completed';
+  printStatus: 'not_required' | 'pending' | 'printing' | 'printed' | 'failed';
+  channels: string[];
+  items: KitchenTicketItem[];
+  totals: KitchenTicketTotals;
+  customer?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+  };
+  notes?: string;
+  enqueuedAt: Date;
+  acknowledgedAt?: Date;
+  acknowledgedBy?: string;
+  retryCount?: number;
+}
+
+export interface TicketAcknowledgementDocument extends BaseDocument {
+  ticketId: string;
+  deviceId: string;
+  status: 'received' | 'printing' | 'printed' | 'failed' | 'completed';
+  notes?: string;
+  acknowledgedAt: Date;
 }
 
 export interface TenantDocument extends BaseDocument {
@@ -112,6 +171,8 @@ export type TenantCollectionsShape = {
   carts: CartDocument;
   orders: OrderDocument;
   devices: DeviceDocument;
+  kitchenTickets: KitchenTicketDocument;
+  ticketAcknowledgements: TicketAcknowledgementDocument;
   tenants: TenantDocument;
   adminUsers: AdminUserDocument;
   pricingOverrides: PricingOverrideDocument;
@@ -125,6 +186,8 @@ export const COLLECTION_NAMES: { [K in keyof TenantCollectionsShape]: string } =
   carts: 'carts',
   orders: 'orders',
   devices: 'devices',
+  kitchenTickets: 'kitchenTickets',
+  ticketAcknowledgements: 'ticketAcknowledgements',
   tenants: 'tenants',
   adminUsers: 'adminUsers',
   pricingOverrides: 'pricingOverrides',

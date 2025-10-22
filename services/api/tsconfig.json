@@ -8,8 +8,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "types": ["node"],
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "typeRoots": ["./src/types"],
+    "lib": ["ES2021", "DOM"],
+    "skipLibCheck": true,
+    "strict": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
