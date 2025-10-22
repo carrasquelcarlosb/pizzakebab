@@ -43,10 +43,26 @@ export function FoodCard({ item }: FoodCardProps) {
     ? formatCurrency(item.price, language)
     : undefined
 
-  const handleAddToCart = () => {
-    addItem(item.id, 1)
+  const handleAddToCart = async () => {
+    if (isAdding) {
+      return
+    }
     setIsAdding(true)
-    setTimeout(() => setIsAdding(false), 1000)
+    try {
+      await addItem(
+        {
+          id: item.id,
+          name: item.name,
+          price: Number(discountedPrice.toFixed(2)),
+          image: item.image,
+        },
+        1,
+      )
+      setTimeout(() => setIsAdding(false), 1000)
+    } catch (error) {
+      console.error("Failed to add item to cart", error)
+      setIsAdding(false)
+    }
   }
 
   return (

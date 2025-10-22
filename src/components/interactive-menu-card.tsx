@@ -2,15 +2,16 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import Image from "next/image"
-import { ShoppingCart, Star, Heart, Share2, Check } from "lucide-react"
+import { ShoppingCart, Star, Heart, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -32,31 +33,41 @@ interface InteractiveMenuCardProps {
 export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [isAdding, setIsAdding] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { t } = useLanguage()
-  const { addItem } = useCart()
+  const { language, t } = useLanguage()
+  const { addItem, items } = useCart()
 
   const effectivePrice = item.discount
     ? item.price - (item.price * item.discount) / 100
     : item.price
-  const displayPrice = effectivePrice.toFixed(2)
+  const formattedPrice = formatCurrency(effectivePrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : null
+  const quantityInCart = items.find((line) => line.id === item.id)?.quantity ?? 0
+  const isInCart = quantityInCart > 0
 
-  const handleAddToCart = () => {
-    addItem(item.id, quantity)
+  const handleAddToCart = async () => {
+    if (isAdding) {
+      return
+    }
     setIsAdding(true)
-    addItem(
-      {
-        id: item.id,
-        name: item.name,
-        price: Number(effectivePrice.toFixed(2)),
-        image: item.image,
-      },
-      quantity,
-    )
-    setTimeout(() => {
-      setIsAdding(false)
+    try {
+      await addItem(
+        {
+          id: item.id,
+          name: item.name,
+          price: Number(effectivePrice.toFixed(2)),
+          image: item.image,
+        },
+        quantity,
+      )
       setQuantity(1)
-    }, 1200)
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -214,19 +225,22 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
               {t("common.inCart")}: {quantityInCart}
             </Badge>
           )}
-          onClick={handleAddToCart}
-          disabled={isAdding}
-        >
-          {isAdding ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {t("cart.added")}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              {t("cart.addToCart")}
-            </div>
+          <Button
+            onClick={handleAddToCart}
+            disabled={isAdding}
+            className="min-w-[140px]"
+          >
+            {isAdding ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                {t("cart.added")}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                {t("cart.addToCart")}
+              </div>
+            )}
           </Button>
         </div>
       </CardFooter>
