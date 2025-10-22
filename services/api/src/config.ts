@@ -16,6 +16,8 @@ export interface AppConfig {
   mongoDbName: string;
   tenantHostMap: Record<string, string>;
   baseDomain?: string;
+  adminJwtSecret: string;
+  adminSessionTtlSeconds: number;
 }
 
 const parseTenantMap = (raw: string | undefined): Record<string, string> => {
@@ -44,4 +46,6 @@ export const config: AppConfig = {
   mongoDbName: requiredEnv('MONGO_DB_NAME'),
   tenantHostMap: parseTenantMap(process.env.TENANT_HOST_MAP),
   baseDomain: process.env.TENANT_BASE_DOMAIN,
+  adminJwtSecret: requiredEnv('ADMIN_JWT_SECRET'),
+  adminSessionTtlSeconds: Number.parseInt(process.env.ADMIN_SESSION_TTL ?? '3600', 10),
 };

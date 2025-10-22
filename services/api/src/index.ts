@@ -7,6 +7,8 @@ import tenantResolverPlugin from './plugins/tenant-resolver';
 import menusRoutes from './routes/menus';
 import cartsRoutes from './routes/carts';
 import ordersRoutes from './routes/orders';
+import adminRoutes from './routes/admin';
+import authPlugin from './plugins/auth';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -23,10 +25,12 @@ export const buildServer = (): FastifyInstance => {
   });
 
   app.register(mongoPlugin);
+  app.register(authPlugin);
   app.register(tenantResolverPlugin);
   app.register(menusRoutes);
   app.register(cartsRoutes);
   app.register(ordersRoutes);
+  app.register(adminRoutes);
 
   app.get('/healthz', async () => ({ status: 'ok' }));
 
