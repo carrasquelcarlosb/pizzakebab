@@ -1,22 +1,6 @@
-import {
-  MongoClient,
-  Db,
-  Collection,
-  Filter,
-  FindOptions,
-  OptionalUnlessRequiredId,
-  UpdateFilter,
-  UpdateOptions,
-  DeleteOptions,
-  Document,
-} from 'mongodb';
+import { MongoClient, Db, Collection, Filter, FindOptions, OptionalUnlessRequiredId, UpdateFilter, UpdateOptions, DeleteOptions, Document } from 'mongodb';
 import { config } from '../config';
 import { COLLECTION_NAMES, TenantCollectionsShape } from './schemas';
-import {
-  appendUpdatedTimestamp,
-  buildTenantScopedFilter,
-  sanitizeTenantScopedUpdate,
-} from './tenant-helpers';
 
 let client: MongoClient | null = null;
 let database: Db | null = null;
@@ -53,11 +37,7 @@ export type TenantCollection<TSchema extends Document> = {
   find(filter?: Filter<TSchema>, options?: FindOptions<TSchema>): ReturnType<Collection<TSchema>['find']>;
   findOne(filter?: Filter<TSchema>, options?: FindOptions<TSchema>): ReturnType<Collection<TSchema>['findOne']>;
   insertOne(document: OptionalUnlessRequiredId<Omit<TSchema, 'tenantId'>>): ReturnType<Collection<TSchema>['insertOne']>;
-  updateOne(
-    filter: Filter<TSchema>,
-    update: UpdateFilter<TSchema>,
-    options?: UpdateOptions,
-  ): ReturnType<Collection<TSchema>['updateOne']>;
+  updateOne(filter: Filter<TSchema>, update: UpdateFilter<TSchema>, options?: UpdateOptions): ReturnType<Collection<TSchema>['updateOne']>;
   deleteOne(filter?: Filter<TSchema>, options?: DeleteOptions): ReturnType<Collection<TSchema>['deleteOne']>;
 };
 
@@ -66,10 +46,10 @@ const createTenantCollection = <TSchema extends { tenantId: string } & Document>
   tenantId: string,
 ): TenantCollection<TSchema> => ({
   find(filter = {}, options) {
-    return collection.find(buildTenantScopedFilter<TSchema>(tenantId, filter) as Filter<TSchema>, options);
+    return collection.find({ tenantId, ...filter } as Filter<TSchema>, options);
   },
   findOne(filter = {}, options) {
-    return collection.findOne(buildTenantScopedFilter<TSchema>(tenantId, filter) as Filter<TSchema>, options);
+    return collection.findOne({ tenantId, ...filter } as Filter<TSchema>, options);
   },
   insertOne(document) {
     const now = new Date();
@@ -82,17 +62,23 @@ const createTenantCollection = <TSchema extends { tenantId: string } & Document>
     return collection.insertOne(payload as OptionalUnlessRequiredId<TSchema>);
   },
   updateOne(filter, update, options) {
-    const sanitizedUpdate = sanitizeTenantScopedUpdate(update) as UpdateFilter<TSchema>;
-    const updateWithTimestamp = appendUpdatedTimestamp(sanitizedUpdate) as UpdateFilter<TSchema>;
+    const updateWithTimestamp = (() => {
+      const timestamp = new Date();
+      if (typeof update === 'object' && update !== null && !Array.isArray(update)) {
+        const modifierKeys = Object.keys(update).filter((key) => key.startsWith('$'));
+        if (modifierKeys.length === 0) {
+          return { ...(update as Record<string, unknown>), updatedAt: timestamp } as UpdateFilter<TSchema>;
+        }
+        const $set = { ...((update as UpdateFilter<TSchema>).$set ?? {}), updatedAt: timestamp };
+        return { ...(update as UpdateFilter<TSchema>), $set };
+      }
+      return update;
+    })();
 
-    return collection.updateOne(
-      buildTenantScopedFilter<TSchema>(tenantId, filter) as Filter<TSchema>,
-      updateWithTimestamp,
-      options,
-    );
+    return collection.updateOne({ tenantId, ...filter } as Filter<TSchema>, updateWithTimestamp, options);
   },
   deleteOne(filter = {}, options) {
-    return collection.deleteOne(buildTenantScopedFilter<TSchema>(tenantId, filter) as Filter<TSchema>, options);
+    return collection.deleteOne({ tenantId, ...filter } as Filter<TSchema>, options);
   },
 });
 
@@ -123,5 +109,3 @@ export const ensureIndexes = async (): Promise<void> => {
 
 export const getMongoClient = async (): Promise<MongoClient> => ensureClient();
 export const getDatabase = async (): Promise<Db> => ensureDatabase();
-
-export { appendUpdatedTimestamp, buildTenantScopedFilter, sanitizeTenantScopedUpdate } from './tenant-helpers';

@@ -3,6 +3,14 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { config } from '../config';
 
 const resolveTenantId = (request: FastifyRequest): string | null => {
+  const tenantHeader = request.headers['x-tenant-id'] ?? request.headers['x-tenant'];
+  if (tenantHeader) {
+    if (Array.isArray(tenantHeader)) {
+      return tenantHeader[0];
+    }
+    return tenantHeader;
+  }
+
   const hostHeader = request.headers.host;
   if (!hostHeader) {
     return null;

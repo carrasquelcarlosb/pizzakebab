@@ -4,6 +4,9 @@ import { randomUUID } from 'crypto';
 import { config } from './config';
 import mongoPlugin from './plugins/mongo';
 import tenantResolverPlugin from './plugins/tenant-resolver';
+import menusRoutes from './routes/menus';
+import cartsRoutes from './routes/carts';
+import ordersRoutes from './routes/orders';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -21,6 +24,9 @@ export const buildServer = (): FastifyInstance => {
 
   app.register(mongoPlugin);
   app.register(tenantResolverPlugin);
+  app.register(menusRoutes);
+  app.register(cartsRoutes);
+  app.register(ordersRoutes);
 
   app.get('/healthz', async () => ({ status: 'ok' }));
 

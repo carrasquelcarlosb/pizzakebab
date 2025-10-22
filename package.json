@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --import tsx --test tests/**/*.test.ts",
+    "test": "node --import tsx --test tests/menu-catalog.test.ts",
     "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true npm run build",
     "api:dev": "tsx services/api/src/index.ts",

@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/translations"
+
 export interface AddressFields {
   address: string
   city: string
@@ -7,7 +9,9 @@ export interface AddressFields {
 export type AddressFieldKey = keyof AddressFields
 export type AddressErrors = Partial<Record<AddressFieldKey, string>>
 
-export function getAddressLabels(t: (key: string) => string) {
+type TranslateFn = (key: TranslationKey) => string
+
+export function getAddressLabels(t: TranslateFn) {
   return {
     address: t("address.labels.street"),
     city: t("address.labels.city"),
@@ -15,7 +19,7 @@ export function getAddressLabels(t: (key: string) => string) {
   }
 }
 
-export function validateAddressFields(fields: AddressFields, t: (key: string) => string): AddressErrors {
+export function validateAddressFields(fields: AddressFields, t: TranslateFn): AddressErrors {
   const errors: AddressErrors = {}
 
   if (!fields.address.trim()) {

@@ -15,6 +15,15 @@ import {
 export function CategorySection() {
   const { t } = useLanguage()
 
+  type CategoryCard = {
+    id: string
+    name: string
+    image: string
+    count: number
+    href: string
+    featured?: boolean
+  }
+
   const coreCategories: Array<{ key: MenuCategory; featured?: boolean }> = [
     { key: "pizzas", featured: true },
     { key: "kebabs", featured: true },
@@ -22,7 +31,7 @@ export function CategorySection() {
     { key: "sides" },
   ]
 
-  const categories = [
+  const categories: CategoryCard[] = [
     ...coreCategories.map(({ key, featured }) => ({
       id: key,
       name: t(getMenuCategoryLabelKey(key)),
