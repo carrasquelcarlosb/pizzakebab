@@ -2,6 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 
 import { getTenantCollections } from '../db/mongo';
 import { menuFixtures } from './menu-fixtures';
+import { hashPassword } from '../services/password';
 
 const normalizeTenantIds = (tenantIds: string[]): string[] => {
   const unique = new Set(tenantIds.filter(Boolean));
@@ -65,6 +66,23 @@ export const seedTenantData = async (tenantIds: string[], logger: FastifyBaseLog
           );
         }
       }
+
+      const adminResourceId = 'default-admin';
+      await collections.adminUsers.updateOne(
+        { resourceId: adminResourceId },
+        {
+          $setOnInsert: {
+            resourceId: adminResourceId,
+            email: `${tenantId}-admin@example.com`,
+            passwordHash: hashPassword('changeme'),
+            name: 'Tenant Admin',
+            roles: ['manager'],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        { upsert: true },
+      );
     } catch (error) {
       logger.error({ err: error, tenantId }, 'failed to seed tenant data');
     }

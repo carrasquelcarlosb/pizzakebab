@@ -74,6 +74,38 @@ export interface TenantDocument extends BaseDocument {
   isActive: boolean;
 }
 
+export interface AdminUserDocument extends BaseDocument {
+  email: string;
+  passwordHash: string;
+  name?: string;
+  roles: string[];
+  lastLoginAt?: Date;
+}
+
+export interface PricingOverrideDocument extends BaseDocument {
+  menuItemId: string;
+  price: number;
+  currency: string;
+  startsAt?: Date;
+  endsAt?: Date;
+  reason?: string;
+}
+
+export interface OperatingHourDocument extends BaseDocument {
+  dayOfWeek: number;
+  opensAt: string;
+  closesAt: string;
+  isClosed?: boolean;
+}
+
+export interface ReportDocument extends BaseDocument {
+  reportType: 'daily-sales' | 'popular-items';
+  rangeStart: Date;
+  rangeEnd: Date;
+  generatedAt: Date;
+  payload: unknown;
+}
+
 export type TenantCollectionsShape = {
   menus: MenuDocument;
   menuItems: MenuItemDocument;
@@ -81,6 +113,10 @@ export type TenantCollectionsShape = {
   orders: OrderDocument;
   devices: DeviceDocument;
   tenants: TenantDocument;
+  adminUsers: AdminUserDocument;
+  pricingOverrides: PricingOverrideDocument;
+  operatingHours: OperatingHourDocument;
+  reports: ReportDocument;
 };
 
 export const COLLECTION_NAMES: { [K in keyof TenantCollectionsShape]: string } = {
@@ -90,4 +126,8 @@ export const COLLECTION_NAMES: { [K in keyof TenantCollectionsShape]: string } =
   orders: 'orders',
   devices: 'devices',
   tenants: 'tenants',
+  adminUsers: 'adminUsers',
+  pricingOverrides: 'pricingOverrides',
+  operatingHours: 'operatingHours',
+  reports: 'reports',
 };
