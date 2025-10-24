@@ -1,8 +1,16 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply } from 'fastify';
 import { randomUUID } from 'crypto';
 
-import { CartItem } from '../db/schemas';
-import { buildCartSummary, serializeCart } from '../services/cart';
+import {
+  CartClosedError,
+  CartNotFoundError,
+  CartUpdateError,
+  ensureCart as ensureCartUseCase,
+  getActiveCart,
+  serializeCart,
+  updateCart as updateCartUseCase,
+} from '../domain';
+import { createCartRepository, createCartSummaryBuilder } from '../services/domain';
 
 type CreateCartBody = {
   deviceId?: string;
@@ -150,83 +158,29 @@ const cartParamsSchema = {
   additionalProperties: false,
 } as const;
 
-const normalizeItems = (items: UpdateCartBody['items']): CartItem[] => {
-  if (!items || items.length === 0) {
-    return [];
+const toIdentifiers = (body: CreateCartBody) => ({
+  deviceId: body.deviceId,
+  sessionId: body.sessionId,
+  userId: body.userId,
+});
+
+const handleCartError = (reply: FastifyReply, error: unknown) => {
+  if (error instanceof CartNotFoundError) {
+    reply.code(404);
+    return { message: error.message };
   }
 
-  const aggregated = new Map<string, { quantity: number; notes?: string }>();
-  for (const item of items) {
-    const menuItemId = String(item.menuItemId);
-    if (!menuItemId) {
-      continue;
-    }
-
-    const normalizedQuantity = Math.max(0, Math.min(Number.isFinite(item.quantity) ? Math.floor(item.quantity) : 0, 99));
-    if (normalizedQuantity <= 0) {
-      continue;
-    }
-
-    const existing = aggregated.get(menuItemId);
-    aggregated.set(menuItemId, {
-      quantity: (existing?.quantity ?? 0) + normalizedQuantity,
-      notes: item.notes ?? existing?.notes,
-    });
+  if (error instanceof CartClosedError) {
+    reply.code(409);
+    return { message: error.message };
   }
 
-  return Array.from(aggregated.entries()).map(([menuItemId, payload]) => ({
-    menuItemId,
-    quantity: payload.quantity,
-    notes: payload.notes,
-  }));
-};
-
-const ensureCart = async (
-  app: FastifyInstance,
-  tenantId: string,
-  body: CreateCartBody,
-) => {
-  const collections = await app.getTenantCollections(tenantId);
-
-  const filter: Record<string, unknown> = { status: 'open' };
-  if (body.deviceId) {
-    filter.deviceId = body.deviceId;
-  }
-  if (body.sessionId) {
-    filter.sessionId = body.sessionId;
-  }
-  if (body.userId) {
-    filter.userId = body.userId;
+  if (error instanceof CartUpdateError) {
+    reply.code(500);
+    return { message: error.message };
   }
 
-  let cart = await collections.carts.findOne(filter);
-
-  if (!cart) {
-    const resourceId = randomUUID();
-    await collections.carts.insertOne({
-      resourceId,
-      deviceId: body.deviceId ?? body.sessionId ?? resourceId,
-      sessionId: body.sessionId,
-      userId: body.userId,
-      status: 'open',
-      items: [],
-      promoCode: body.promoCode ?? null,
-    });
-    cart = await collections.carts.findOne({ resourceId });
-  } else if (body.promoCode && cart.promoCode !== body.promoCode) {
-    await collections.carts.updateOne(
-      { resourceId: cart.resourceId },
-      { $set: { promoCode: body.promoCode } },
-    );
-    cart = await collections.carts.findOne({ resourceId: cart.resourceId });
-  }
-
-  if (!cart) {
-    throw new Error('Failed to resolve cart');
-  }
-
-  const summary = await buildCartSummary(collections, cart);
-  return serializeCart(cart, summary);
+  throw error;
 };
 
 export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
@@ -239,8 +193,21 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
-      const cart = await ensureCart(app, request.tenantId, request.body);
-      return { cart };
+      const collections = await request.getTenantCollections();
+      const cartRepository = createCartRepository(collections);
+      const summaryBuilder = createCartSummaryBuilder(collections);
+      const { cart, summary } = await ensureCartUseCase(
+        {
+          cartRepository,
+          summaryBuilder,
+          idGenerator: randomUUID,
+        },
+        {
+          identifiers: toIdentifiers(request.body),
+          promoCode: request.body.promoCode ?? null,
+        },
+      );
+      return { cart: serializeCart(cart, summary) };
     },
   );
 
@@ -255,20 +222,18 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { cartId } = request.params as { cartId: string };
       const collections = await request.getTenantCollections();
-      const cart = await collections.carts.findOne({ resourceId: cartId });
+      const cartRepository = createCartRepository(collections);
+      const summaryBuilder = createCartSummaryBuilder(collections);
 
-      if (!cart) {
-        reply.code(404);
-        return { message: 'Cart not found' };
+      try {
+        const { cart, summary } = await getActiveCart(
+          { cartRepository, summaryBuilder },
+          cartId,
+        );
+        return { cart: serializeCart(cart, summary) };
+      } catch (error) {
+        return handleCartError(reply, error);
       }
-
-      if (cart.status !== 'open') {
-        reply.code(409);
-        return { message: 'Cart is no longer active' };
-      }
-
-      const summary = await buildCartSummary(collections, cart);
-      return { cart: serializeCart(cart, summary) };
     },
   );
 
@@ -284,44 +249,23 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const { cartId } = request.params;
       const collections = await request.getTenantCollections();
-      const cart = await collections.carts.findOne({ resourceId: cartId });
+      const cartRepository = createCartRepository(collections);
+      const summaryBuilder = createCartSummaryBuilder(collections);
 
-      if (!cart) {
-        reply.code(404);
-        return { message: 'Cart not found' };
-      }
-
-      if (cart.status !== 'open') {
-        reply.code(409);
-        return { message: 'Cart is no longer active' };
-      }
-
-      const updatePayload: Record<string, unknown> = {};
-
-      if (request.body.items) {
-        updatePayload.items = normalizeItems(request.body.items);
-      }
-
-      if (Object.prototype.hasOwnProperty.call(request.body, 'promoCode')) {
-        updatePayload.promoCode = request.body.promoCode ? request.body.promoCode : null;
-      }
-
-      if (Object.keys(updatePayload).length > 0) {
-        await collections.carts.updateOne(
-          { resourceId: cartId },
-          { $set: updatePayload },
+      try {
+        const { cart, summary } = await updateCartUseCase(
+          { cartRepository, summaryBuilder },
+          {
+            cartId,
+            items: request.body.items,
+            promoCode: request.body.promoCode ?? null,
+            shouldUpdatePromoCode: Object.prototype.hasOwnProperty.call(request.body, 'promoCode'),
+          },
         );
+        return { cart: serializeCart(cart, summary) };
+      } catch (error) {
+        return handleCartError(reply, error);
       }
-
-      const updatedCart = await collections.carts.findOne({ resourceId: cartId });
-      if (!updatedCart) {
-        reply.code(500);
-        return { message: 'Failed to update cart' };
-      }
-
-      const summary = await buildCartSummary(collections, updatedCart);
-      return { cart: serializeCart(updatedCart, summary) };
     },
   );
 }
-

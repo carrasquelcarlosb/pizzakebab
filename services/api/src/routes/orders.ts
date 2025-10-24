@@ -1,8 +1,19 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply } from 'fastify';
 import { randomUUID } from 'crypto';
 
-import { buildCartSummary } from '../services/cart';
-import { enqueueKitchenTicket } from '../services/kitchen-queue';
+import {
+  CartClosedError,
+  CartNotFoundError,
+  OrderReceipt,
+  OrderSubmissionError,
+  submitOrder,
+} from '../domain';
+import {
+  createCartRepository,
+  createCartSummaryBuilder,
+  createKitchenGateway,
+  createOrderRepository,
+} from '../services/domain';
 
 type SubmitOrderBody = {
   cartId: string;
@@ -73,10 +84,44 @@ const orderResponseSchema = {
     submittedAt: { type: 'string', format: 'date-time' },
     promotion: promotionSchema,
     totals: cartTotalsSchema,
+    customer: customerSchema,
+    notes: { type: 'string' },
   },
   required: ['id', 'cartId', 'status', 'total', 'currency', 'submittedAt', 'totals'],
   additionalProperties: false,
 } as const;
+
+const serializeOrder = (receipt: OrderReceipt) => ({
+  id: receipt.order.id,
+  cartId: receipt.order.cartId,
+  status: receipt.order.status,
+  total: receipt.order.total,
+  currency: receipt.order.currency,
+  submittedAt: receipt.order.submittedAt.toISOString(),
+  promotion: receipt.order.promotion,
+  totals: receipt.order.totals,
+  customer: receipt.order.customer,
+  notes: receipt.order.notes,
+});
+
+const handleOrderError = (reply: FastifyReply, error: unknown) => {
+  if (error instanceof CartNotFoundError) {
+    reply.code(404);
+    return { message: error.message };
+  }
+
+  if (error instanceof CartClosedError) {
+    reply.code(409);
+    return { message: error.message };
+  }
+
+  if (error instanceof OrderSubmissionError) {
+    reply.code(400);
+    return { message: error.message };
+  }
+
+  throw error;
+};
 
 export default async function ordersRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Body: SubmitOrderBody }>(
@@ -96,84 +141,37 @@ export default async function ordersRoutes(app: FastifyInstance): Promise<void> 
       },
     },
     async (request, reply) => {
-      const { cartId, promoCode, notes, customer } = request.body;
       const collections = await request.getTenantCollections();
-      let cart = await collections.carts.findOne({ resourceId: cartId });
+      const cartRepository = createCartRepository(collections);
+      const summaryBuilder = createCartSummaryBuilder(collections);
+      const orderRepository = createOrderRepository(collections);
+      const kitchenGateway = createKitchenGateway(request.tenantId, collections, request.log);
 
-      if (!cart) {
-        reply.code(404);
-        return { message: 'Cart not found' };
-      }
-
-      if (cart.status !== 'open') {
-        reply.code(409);
-        return { message: 'Cart is no longer active' };
-      }
-
-      if (promoCode && cart.promoCode !== promoCode) {
-        await collections.carts.updateOne(
-          { resourceId: cart.resourceId },
-          { $set: { promoCode } },
+      try {
+        const receipt = await submitOrder(
+          {
+            cartRepository,
+            orderRepository,
+            summaryBuilder,
+            kitchenGateway,
+            idGenerator: randomUUID,
+            now: () => new Date(),
+          },
+          {
+            cartId: request.body.cartId,
+            promoCode: request.body.promoCode ?? null,
+            customer: request.body.customer,
+            notes: request.body.notes,
+          },
         );
-        cart = await collections.carts.findOne({ resourceId: cart.resourceId });
+
+        reply.code(201);
+        return {
+          order: serializeOrder(receipt),
+        };
+      } catch (error) {
+        return handleOrderError(reply, error);
       }
-
-      if (!cart) {
-        reply.code(404);
-        return { message: 'Cart not found' };
-      }
-
-      const summary = await buildCartSummary(collections, cart);
-      const resourceId = randomUUID();
-      const submittedAt = new Date();
-
-      await collections.orders.insertOne({
-        resourceId,
-        cartId,
-        status: 'pending',
-        total: summary.totals.total,
-        currency: summary.totals.currency,
-        submittedAt,
-        promoCode: summary.promotion?.code ?? cart.promoCode ?? null,
-        items: summary.items.map(({ menuItemId, quantity, notes: lineNotes }) => ({
-          menuItemId,
-          quantity,
-          notes: lineNotes,
-        })),
-        deliveryFee: summary.totals.deliveryFee,
-        discountTotal: summary.totals.discount,
-        customer,
-        notes,
-      });
-
-      await collections.carts.updateOne(
-        { resourceId: cartId },
-        { $set: { status: 'checked_out' } },
-      );
-
-      await enqueueKitchenTicket(request.tenantId, collections, request.log, {
-        orderId: resourceId,
-        cartId,
-        items: summary.items,
-        totals: summary.totals,
-        customer,
-        notes,
-      });
-
-      reply.code(201);
-      return {
-        order: {
-          id: resourceId,
-          cartId,
-          status: 'pending',
-          total: summary.totals.total,
-          currency: summary.totals.currency,
-          submittedAt: submittedAt.toISOString(),
-          promotion: summary.promotion ?? null,
-          totals: summary.totals,
-        },
-      };
     },
   );
 }
-

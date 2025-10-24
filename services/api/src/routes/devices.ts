@@ -320,10 +320,36 @@ export default async function devicesRoutes(app: FastifyInstance): Promise<void>
           200: {
             type: 'object',
             properties: {
-              ticket: { type: 'object' },
-              acknowledgement: { type: 'object' },
+              id: { type: 'string' },
+              ticketId: { type: 'string' },
+              deviceId: { type: 'string' },
+              status: {
+                type: 'string',
+                enum: ['received', 'printing', 'printed', 'failed', 'completed'],
+              },
+              notes: { type: ['string', 'null'] },
+              acknowledgedAt: { type: 'string' },
+              createdAt: { type: 'string' },
+              updatedAt: { type: 'string' },
             },
-            required: ['ticket', 'acknowledgement'],
+            required: [
+              'id',
+              'ticketId',
+              'deviceId',
+              'status',
+              'acknowledgedAt',
+              'createdAt',
+              'updatedAt',
+            ],
+            additionalProperties: false,
+          },
+          404: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+            required: ['message'],
+            additionalProperties: false,
           },
         },
       },
@@ -339,19 +365,19 @@ export default async function devicesRoutes(app: FastifyInstance): Promise<void>
         return { message: 'Device not found' };
       }
 
-      const result = await acknowledgeKitchenTicket(request.tenantId, collections, request.log, {
+      const acknowledgement = await acknowledgeKitchenTicket(collections, ticketId, {
         ticketId,
         deviceId,
         status,
         notes: notes ?? undefined,
       });
 
-      if (!result) {
+      if (!acknowledgement) {
         reply.code(404);
         return { message: 'Ticket not found' };
       }
 
-      return result;
+      return acknowledgement;
     },
   );
 

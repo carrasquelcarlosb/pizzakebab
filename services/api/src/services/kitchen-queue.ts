@@ -10,26 +10,14 @@ import type {
   KitchenTicketTotals,
   TicketAcknowledgementDocument,
 } from '../db/schemas';
-import type { HydratedCartItem, CartTotals } from './cart';
+import type { HydratedCartItem, CartTotals, KitchenTicketPayload as DomainKitchenTicketPayload } from '../domain';
 import { ticketStream } from './ticket-stream';
 
 export type KitchenTicketStatus = KitchenTicketDocument['status'];
 export type KitchenTicketPrintStatus = KitchenTicketDocument['printStatus'];
 export type TicketAcknowledgementStatus = TicketAcknowledgementDocument['status'];
 
-export interface KitchenTicketPayload {
-  orderId: string;
-  cartId: string;
-  items: HydratedCartItem[];
-  totals: CartTotals;
-  customer?: {
-    name?: string;
-    phone?: string;
-    email?: string;
-  };
-  notes?: string;
-  channels?: string[];
-}
+export interface KitchenTicketPayload extends DomainKitchenTicketPayload {}
 
 export interface KitchenTicketView {
   id: string;
@@ -200,99 +188,81 @@ export const enqueueKitchenTicket = async (
   return view;
 };
 
-export const getOutstandingKitchenTickets = async (
-  collections: TenantCollections,
-): Promise<KitchenTicketView[]> => {
-  const docs = await collections.kitchenTickets
-    .find({ status: { $ne: 'completed' } } as Filter<KitchenTicketDocument>)
-    .sort({ enqueuedAt: 1 })
-    .toArray();
-
-  return docs.map(toKitchenTicketView);
-};
-
 export const acknowledgeKitchenTicket = async (
-  tenantId: string,
   collections: TenantCollections,
-  logger: FastifyBaseLogger,
-  acknowledgement: TicketAcknowledgementInput,
-): Promise<{ ticket: KitchenTicketView; acknowledgement: TicketAcknowledgementView } | null> => {
-  const ticket = await collections.kitchenTickets.findOne({ resourceId: acknowledgement.ticketId });
+  ticketId: string,
+  input: TicketAcknowledgementInput,
+): Promise<TicketAcknowledgementView | null> => {
+  const ticket = await collections.kitchenTickets.findOne({ resourceId: ticketId });
   if (!ticket) {
     return null;
   }
 
   const resourceId = randomUUID();
-  const now = new Date();
+  const acknowledgedAt = new Date();
 
   await collections.ticketAcknowledgements.insertOne({
     resourceId,
-    ticketId: acknowledgement.ticketId,
-    deviceId: acknowledgement.deviceId,
-    status: acknowledgement.status,
-    notes: acknowledgement.notes,
-    acknowledgedAt: now,
+    ticketId,
+    deviceId: input.deviceId,
+    status: input.status,
+    notes: input.notes,
+    acknowledgedAt,
   });
 
   const update: Partial<KitchenTicketDocument> = {
-    acknowledgedBy: acknowledgement.deviceId,
+    acknowledgedBy: input.deviceId,
   };
 
-  if (acknowledgement.status === 'received' && ticket.status === 'pending') {
+  if (input.status === 'received' && ticket.status === 'pending') {
     update.status = 'acknowledged';
-    update.acknowledgedAt = now;
+    update.acknowledgedAt = acknowledgedAt;
   }
 
-  if (acknowledgement.status === 'completed') {
+  if (input.status === 'completed') {
     update.status = 'completed';
-    update.acknowledgedAt = now;
+    update.acknowledgedAt = acknowledgedAt;
   }
 
-  if (acknowledgement.status === 'printing') {
+  if (input.status === 'printing') {
     update.printStatus = 'printing';
   }
 
-  if (acknowledgement.status === 'printed') {
+  if (input.status === 'printed') {
     update.printStatus = 'printed';
     if (ticket.status === 'pending') {
       update.status = 'acknowledged';
     }
-    update.acknowledgedAt = now;
+    update.acknowledgedAt = acknowledgedAt;
   }
 
-  if (acknowledgement.status === 'failed') {
+  if (input.status === 'failed') {
     update.printStatus = 'failed';
     update.retryCount = (ticket.retryCount ?? 0) + 1;
   }
 
-  await collections.kitchenTickets.updateOne(
-    { resourceId: acknowledgement.ticketId },
-    { $set: update },
-  );
+  if (Object.keys(update).length > 0) {
+    await collections.kitchenTickets.updateOne(
+      { resourceId: ticketId },
+      { $set: update },
+    );
+  }
 
-  const updatedTicket = await collections.kitchenTickets.findOne({ resourceId: acknowledgement.ticketId });
+  const updatedTicket = await collections.kitchenTickets.findOne({ resourceId: ticketId });
   const persistedAcknowledgement = await collections.ticketAcknowledgements.findOne({ resourceId });
 
   if (!updatedTicket || !persistedAcknowledgement) {
     throw new Error('Failed to load acknowledgement result');
   }
 
-  const ackView = toTicketAcknowledgementView(persistedAcknowledgement);
+  const acknowledgementView = toTicketAcknowledgementView(persistedAcknowledgement);
   const ticketView = toKitchenTicketView(updatedTicket);
 
-  logger.info(
-    { ticketId: acknowledgement.ticketId, acknowledgement: ackView },
-    'kitchen ticket acknowledged',
-  );
-
-  ticketStream.publish(tenantId, {
+  ticketStream.publish(ticket.tenantId, {
     type: 'ticket.acknowledged',
     ticket: ticketView,
-    acknowledgement: ackView,
+    acknowledgement: acknowledgementView,
   });
 
-  return { ticket: ticketView, acknowledgement: ackView };
+  return acknowledgementView;
 };
-
-export const formatKitchenTicket = toKitchenTicketView;
-export const formatTicketAcknowledgement = toTicketAcknowledgementView;
