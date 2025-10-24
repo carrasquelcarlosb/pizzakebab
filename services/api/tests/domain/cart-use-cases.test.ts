@@ -10,8 +10,9 @@ import {
   CartSummary,
   CartTotals,
   MenuItem,
-  KitchenGateway,
+  KitchenNotifier,
   OrderRepository,
+  TenantContextProvider,
   ensureCart,
   getActiveCart,
   normalizeCartItems,
@@ -79,7 +80,7 @@ class InMemoryCartRepository implements CartRepository {
     return cart ? cloneCart(cart) : null;
   }
 
-  async create(input: { id: string; deviceId: string; sessionId?: string | null; userId?: string | null; promoCode?: string | null; }): Promise<Cart> {
+  async create(input: { id: string; deviceId: string; sessionId?: string | null; userId?: string | null; promoCode?: string | null }): Promise<Cart> {
     const cart = createCart({
       id: input.id,
       deviceId: input.deviceId,
@@ -141,8 +142,8 @@ class InMemoryOrderRepository implements OrderRepository {
   }
 }
 
-class InMemoryKitchenGateway implements KitchenGateway {
-  public enqueued: Array<{
+class InMemoryKitchenNotifier implements KitchenNotifier {
+  public notifications: Array<{
     orderId: string;
     cartId: string;
     totals: CartTotals;
@@ -151,7 +152,7 @@ class InMemoryKitchenGateway implements KitchenGateway {
     notes?: string;
   }> = [];
 
-  async enqueue(payload: {
+  async notify(payload: {
     orderId: string;
     cartId: string;
     totals: CartTotals;
@@ -159,9 +160,38 @@ class InMemoryKitchenGateway implements KitchenGateway {
     customer?: { name?: string; phone?: string; email?: string };
     notes?: string;
   }): Promise<void> {
-    this.enqueued.push({ ...payload, totals: { ...payload.totals } });
+    this.notifications.push({ ...payload, totals: { ...payload.totals } });
   }
 }
+
+const createTenantContextProvider = (deps: {
+  cartRepository: CartRepository;
+  summaryBuilder: CartSummaryBuilder;
+  orderRepository?: OrderRepository;
+  kitchenNotifier?: KitchenNotifier;
+}): TenantContextProvider => ({
+  async getCartRepository(): Promise<CartRepository> {
+    return deps.cartRepository;
+  },
+
+  async getCartSummaryBuilder(): Promise<CartSummaryBuilder> {
+    return deps.summaryBuilder;
+  },
+
+  async getOrderRepository(): Promise<OrderRepository> {
+    if (!deps.orderRepository) {
+      throw new Error('orderRepository not configured');
+    }
+    return deps.orderRepository;
+  },
+
+  async getKitchenNotifier(): Promise<KitchenNotifier> {
+    if (!deps.kitchenNotifier) {
+      throw new Error('kitchenNotifier not configured');
+    }
+    return deps.kitchenNotifier;
+  },
+});
 
 const menuItems: MenuItem[] = [
   {
@@ -208,10 +238,14 @@ describe('ensureCart', () => {
   });
 
   it('creates a new cart when none exist for identifiers', async () => {
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
+
     const result = await ensureCart(
       {
-        cartRepository: repository,
-        summaryBuilder,
+        tenantContext,
         idGenerator: () => 'generated-id',
       },
       {
@@ -235,11 +269,14 @@ describe('ensureCart', () => {
   it('updates promo code on an existing cart', async () => {
     const existing = createCart({ id: 'cart-123', promoCode: null });
     repository = new InMemoryCartRepository([existing]);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
 
     const result = await ensureCart(
       {
-        cartRepository: repository,
-        summaryBuilder,
+        tenantContext,
         idGenerator: () => 'another-id',
       },
       {
@@ -260,21 +297,35 @@ describe('getActiveCart', () => {
       items: [{ menuItemId: 'pizza-margherita', quantity: 2 }],
     });
     const repository = new InMemoryCartRepository([cart]);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
 
-    const result = await getActiveCart({ cartRepository: repository, summaryBuilder }, 'cart-1');
+    const result = await getActiveCart({ tenantContext }, 'cart-1');
 
     assert.equal(result.summary.totals.subtotal, 20);
   });
 
   it('throws when cart cannot be found', async () => {
     const repository = new InMemoryCartRepository();
-    await assert.rejects(() => getActiveCart({ cartRepository: repository, summaryBuilder }, 'missing'), CartNotFoundError);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
+
+    await assert.rejects(() => getActiveCart({ tenantContext }, 'missing'), CartNotFoundError);
   });
 
   it('throws when cart is closed', async () => {
     const cart = createCart({ id: 'cart-closed', status: 'checked_out' });
     const repository = new InMemoryCartRepository([cart]);
-    await assert.rejects(() => getActiveCart({ cartRepository: repository, summaryBuilder }, 'cart-closed'), CartClosedError);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
+
+    await assert.rejects(() => getActiveCart({ tenantContext }, 'cart-closed'), CartClosedError);
   });
 });
 
@@ -282,9 +333,13 @@ describe('updateCart', () => {
   it('normalizes items and updates promo codes when requested', async () => {
     const cart = createCart({ id: 'cart-1' });
     const repository = new InMemoryCartRepository([cart]);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
 
     const result = await updateCart(
-      { cartRepository: repository, summaryBuilder },
+      { tenantContext },
       {
         cartId: 'cart-1',
         items: [
@@ -305,11 +360,15 @@ describe('updateCart', () => {
   it('throws when cart is closed', async () => {
     const cart = createCart({ id: 'cart-2', status: 'checked_out' });
     const repository = new InMemoryCartRepository([cart]);
+    const tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+    });
 
     await assert.rejects(
       () =>
         updateCart(
-          { cartRepository: repository, summaryBuilder },
+          { tenantContext },
           { cartId: 'cart-2', items: [], shouldUpdatePromoCode: false },
         ),
       CartClosedError,
@@ -320,7 +379,8 @@ describe('updateCart', () => {
 describe('submitOrder', () => {
   let repository: InMemoryCartRepository;
   let orderRepository: InMemoryOrderRepository;
-  let kitchenGateway: InMemoryKitchenGateway;
+  let kitchenNotifier: InMemoryKitchenNotifier;
+  let tenantContext: TenantContextProvider;
 
   beforeEach(() => {
     const cart = createCart({
@@ -333,16 +393,19 @@ describe('submitOrder', () => {
     });
     repository = new InMemoryCartRepository([cart]);
     orderRepository = new InMemoryOrderRepository();
-    kitchenGateway = new InMemoryKitchenGateway();
+    kitchenNotifier = new InMemoryKitchenNotifier();
+    tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+      orderRepository,
+      kitchenNotifier,
+    });
   });
 
-  it('creates an order, marks the cart as checked out, and enqueues the kitchen ticket', async () => {
+  it('creates an order, marks the cart as checked out, and notifies the kitchen', async () => {
     const receipt = await submitOrder(
       {
-        cartRepository: repository,
-        orderRepository,
-        summaryBuilder,
-        kitchenGateway,
+        tenantContext,
         idGenerator: () => 'order-1',
         now: () => baseTime,
       },
@@ -356,14 +419,17 @@ describe('submitOrder', () => {
 
     assert.equal(receipt.order.id, 'order-1');
     assert.equal(receipt.order.status, 'pending');
-    assert.equal(receipt.order.totals.total, receipt.order.totals.subtotal + receipt.order.totals.deliveryFee - receipt.order.totals.discount);
+    assert.equal(
+      receipt.order.totals.total,
+      receipt.order.totals.subtotal + receipt.order.totals.deliveryFee - receipt.order.totals.discount,
+    );
 
     assert.equal(orderRepository.created.length, 1);
     assert.equal(orderRepository.created[0].id, 'order-1');
     assert.equal(orderRepository.created[0].promotionCode, 'WELCOME20');
 
-    assert.equal(kitchenGateway.enqueued.length, 1);
-    assert.equal(kitchenGateway.enqueued[0].orderId, 'order-1');
+    assert.equal(kitchenNotifier.notifications.length, 1);
+    assert.equal(kitchenNotifier.notifications[0].orderId, 'order-1');
 
     const storedCart = await repository.findById('cart-submit');
     assert.equal(storedCart?.status, 'checked_out');
@@ -371,15 +437,18 @@ describe('submitOrder', () => {
 
   it('throws when the cart cannot be found', async () => {
     repository = new InMemoryCartRepository();
+    tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+      orderRepository,
+      kitchenNotifier,
+    });
 
     await assert.rejects(
       () =>
         submitOrder(
           {
-            cartRepository: repository,
-            orderRepository,
-            summaryBuilder,
-            kitchenGateway,
+            tenantContext,
             idGenerator: () => 'order-2',
             now: () => baseTime,
           },
@@ -392,15 +461,18 @@ describe('submitOrder', () => {
   it('throws when the cart is closed', async () => {
     const cart = createCart({ id: 'closed-cart', status: 'checked_out' });
     repository = new InMemoryCartRepository([cart]);
+    tenantContext = createTenantContextProvider({
+      cartRepository: repository,
+      summaryBuilder,
+      orderRepository,
+      kitchenNotifier,
+    });
 
     await assert.rejects(
       () =>
         submitOrder(
           {
-            cartRepository: repository,
-            orderRepository,
-            summaryBuilder,
-            kitchenGateway,
+            tenantContext,
             idGenerator: () => 'order-3',
             now: () => baseTime,
           },

@@ -266,3 +266,14 @@ export const acknowledgeKitchenTicket = async (
 
   return acknowledgementView;
 };
+
+export const getOutstandingKitchenTickets = async (
+  collections: TenantCollections,
+): Promise<KitchenTicketView[]> => {
+  const docs = await collections.kitchenTickets
+    .find({ status: { $ne: 'completed' } } as Filter<KitchenTicketDocument>)
+    .sort({ enqueuedAt: 1 })
+    .toArray();
+
+  return docs.map((doc) => toKitchenTicketView(doc as KitchenTicketDocument));
+};

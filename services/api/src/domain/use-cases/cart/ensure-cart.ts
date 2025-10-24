@@ -1,6 +1,7 @@
 import { Cart, CartSummary } from '../../models/cart';
 import { CartSummaryBuilder } from '../../ports/cart-summary-builder';
 import { CartIdentifiers, CartRepository, CreateCartInput } from '../../ports/cart-repository';
+import { TenantContextProvider } from '../../ports/tenant-context-provider';
 
 export interface EnsureCartInput {
   identifiers: CartIdentifiers;
@@ -8,8 +9,7 @@ export interface EnsureCartInput {
 }
 
 export interface EnsureCartDependencies {
-  cartRepository: CartRepository;
-  summaryBuilder: CartSummaryBuilder;
+  tenantContext: TenantContextProvider;
   idGenerator: () => string;
 }
 
@@ -18,12 +18,24 @@ export interface EnsureCartResult {
   summary: CartSummary;
 }
 
+const resolveDependencies = async (
+  provider: TenantContextProvider,
+): Promise<{ cartRepository: CartRepository; summaryBuilder: CartSummaryBuilder }> => {
+  const [cartRepository, summaryBuilder] = await Promise.all([
+    provider.getCartRepository(),
+    provider.getCartSummaryBuilder(),
+  ]);
+  return { cartRepository, summaryBuilder };
+};
+
 export const ensureCart = async (
   deps: EnsureCartDependencies,
   input: EnsureCartInput,
 ): Promise<EnsureCartResult> => {
-  const { cartRepository, summaryBuilder, idGenerator } = deps;
+  const { tenantContext, idGenerator } = deps;
   const { identifiers, promoCode } = input;
+
+  const { cartRepository, summaryBuilder } = await resolveDependencies(tenantContext);
 
   let cart = await cartRepository.findOpenCartByIdentifiers(identifiers);
 

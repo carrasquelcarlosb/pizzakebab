@@ -30,6 +30,8 @@ declare module 'fastify' {
     raw: IncomingMessage & { url?: string };
     tenantId: string;
     getTenantCollections: () => Promise<any>;
+    tenantContextProvider?: unknown;
+    getTenantContext: () => any;
     adminUser?: unknown;
     body: any;
     params: any;

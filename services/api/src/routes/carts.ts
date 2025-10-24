@@ -10,7 +10,6 @@ import {
   serializeCart,
   updateCart as updateCartUseCase,
 } from '../domain';
-import { createCartRepository, createCartSummaryBuilder } from '../services/domain';
 
 type CreateCartBody = {
   deviceId?: string;
@@ -193,13 +192,9 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
-      const collections = await request.getTenantCollections();
-      const cartRepository = createCartRepository(collections);
-      const summaryBuilder = createCartSummaryBuilder(collections);
       const { cart, summary } = await ensureCartUseCase(
         {
-          cartRepository,
-          summaryBuilder,
+          tenantContext: request.getTenantContext(),
           idGenerator: randomUUID,
         },
         {
@@ -221,13 +216,10 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { cartId } = request.params as { cartId: string };
-      const collections = await request.getTenantCollections();
-      const cartRepository = createCartRepository(collections);
-      const summaryBuilder = createCartSummaryBuilder(collections);
 
       try {
         const { cart, summary } = await getActiveCart(
-          { cartRepository, summaryBuilder },
+          { tenantContext: request.getTenantContext() },
           cartId,
         );
         return { cart: serializeCart(cart, summary) };
@@ -248,13 +240,10 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
     },
     async (request, reply) => {
       const { cartId } = request.params;
-      const collections = await request.getTenantCollections();
-      const cartRepository = createCartRepository(collections);
-      const summaryBuilder = createCartSummaryBuilder(collections);
 
       try {
         const { cart, summary } = await updateCartUseCase(
-          { cartRepository, summaryBuilder },
+          { tenantContext: request.getTenantContext() },
           {
             cartId,
             items: request.body.items,

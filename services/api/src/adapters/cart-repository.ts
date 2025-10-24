@@ -1,15 +1,15 @@
 import { Filter } from 'mongodb';
 
-import { TenantCollection, TenantCollections } from '../../db/mongo';
-import { CartDocument } from '../../db/schemas';
+import { TenantCollection, TenantCollections } from '../db/mongo';
+import { CartDocument } from '../db/schemas';
 import {
   Cart,
   CartIdentifiers,
   CartRepository,
   CartStatus,
   CreateCartInput,
-  UpdateCartInput,
-} from '../../domain';
+  UpdateCartPayload,
+} from '../domain';
 
 const toDomainCart = (doc: CartDocument): Cart => ({
   id: doc.resourceId,
@@ -37,7 +37,7 @@ const buildIdentifierFilter = (identifiers: CartIdentifiers): Filter<CartDocumen
   return filter;
 };
 
-export const createCartRepository = (collections: TenantCollections): CartRepository => {
+export const createMongoCartRepository = (collections: TenantCollections): CartRepository => {
   const carts = collections.carts as TenantCollection<CartDocument>;
 
   const findById = async (cartId: string): Promise<Cart | null> => {
@@ -73,7 +73,7 @@ export const createCartRepository = (collections: TenantCollections): CartReposi
       return created;
     },
 
-    async update(cartId: string, update: UpdateCartInput): Promise<Cart> {
+    async update(cartId: string, update: UpdateCartPayload): Promise<Cart> {
       const payload: Record<string, unknown> = {};
       if (update.items) {
         payload.items = update.items;

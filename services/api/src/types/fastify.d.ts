@@ -2,11 +2,14 @@ import 'fastify';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { getTenantCollections, TenantCollections } from '../db/mongo';
 import type { AdminUserSession } from '../plugins/auth';
+import type { TenantContextProvider } from '../domain';
 
 declare module 'fastify' {
   interface FastifyRequest {
     tenantId: string;
     getTenantCollections: () => Promise<TenantCollections>;
+    tenantContextProvider?: TenantContextProvider;
+    getTenantContext: () => TenantContextProvider;
     adminUser?: AdminUserSession;
   }
 

@@ -1,8 +1,9 @@
 import { CartClosedError, CartNotFoundError, OrderSubmissionError } from '../../errors';
 import { CartSummaryBuilder } from '../../ports/cart-summary-builder';
 import { CartRepository } from '../../ports/cart-repository';
-import { KitchenGateway } from '../../ports/kitchen-gateway';
+import { KitchenNotifier } from '../../ports/kitchen-notifier';
 import { OrderRepository } from '../../ports/order-repository';
+import { TenantContextProvider } from '../../ports/tenant-context-provider';
 import { OrderReceipt } from '../../models/order';
 
 export interface SubmitOrderInput {
@@ -17,20 +18,38 @@ export interface SubmitOrderInput {
 }
 
 export interface SubmitOrderDependencies {
-  cartRepository: CartRepository;
-  orderRepository: OrderRepository;
-  summaryBuilder: CartSummaryBuilder;
-  kitchenGateway: KitchenGateway;
+  tenantContext: TenantContextProvider;
   idGenerator: () => string;
   now: () => Date;
 }
+
+interface OrderDependencies {
+  cartRepository: CartRepository;
+  orderRepository: OrderRepository;
+  summaryBuilder: CartSummaryBuilder;
+  kitchenNotifier: KitchenNotifier;
+}
+
+const resolveDependencies = async (provider: TenantContextProvider): Promise<OrderDependencies> => {
+  const [cartRepository, orderRepository, summaryBuilder, kitchenNotifier] = await Promise.all([
+    provider.getCartRepository(),
+    provider.getOrderRepository(),
+    provider.getCartSummaryBuilder(),
+    provider.getKitchenNotifier(),
+  ]);
+
+  return { cartRepository, orderRepository, summaryBuilder, kitchenNotifier };
+};
 
 export const submitOrder = async (
   deps: SubmitOrderDependencies,
   input: SubmitOrderInput,
 ): Promise<OrderReceipt> => {
-  const { cartRepository, orderRepository, summaryBuilder, kitchenGateway, idGenerator, now } = deps;
+  const { tenantContext, idGenerator, now } = deps;
   const { cartId, promoCode, customer, notes } = input;
+
+  const { cartRepository, orderRepository, summaryBuilder, kitchenNotifier } =
+    await resolveDependencies(tenantContext);
 
   let cart = await cartRepository.findById(cartId);
   if (!cart) {
@@ -73,7 +92,7 @@ export const submitOrder = async (
 
   await cartRepository.setStatus(cart.id, 'checked_out');
 
-  await kitchenGateway.enqueue({
+  await kitchenNotifier.notify({
     orderId,
     cartId: cart.id,
     items: summary.items,

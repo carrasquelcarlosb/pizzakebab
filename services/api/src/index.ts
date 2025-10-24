@@ -10,6 +10,7 @@ import ordersRoutes from './routes/orders';
 import adminRoutes from './routes/admin';
 import devicesRoutes from './routes/devices';
 import authPlugin from './plugins/auth';
+import domainAdaptersPlugin from './plugins/domain-adapters';
 import { startPrintServiceWorker } from './services/print-service';
 
 const logger = pino({
@@ -29,6 +30,7 @@ export const buildServer = (): FastifyInstance => {
   app.register(mongoPlugin);
   app.register(authPlugin);
   app.register(tenantResolverPlugin);
+  app.register(domainAdaptersPlugin);
   app.register(menusRoutes);
   app.register(cartsRoutes);
   app.register(ordersRoutes);
