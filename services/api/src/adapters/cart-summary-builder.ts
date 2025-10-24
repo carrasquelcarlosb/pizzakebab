@@ -1,7 +1,7 @@
 import { Filter } from 'mongodb';
 
-import { TenantCollection, TenantCollections } from '../../db/mongo';
-import { MenuItemDocument } from '../../db/schemas';
+import { TenantCollection, TenantCollections } from '../db/mongo';
+import { MenuItemDocument } from '../db/schemas';
 import {
   Cart,
   CartSummary,
@@ -9,7 +9,7 @@ import {
   MenuItem,
   buildCartSummary,
   evaluatePromoCode,
-} from '../../domain';
+} from '../domain';
 
 const toDomainMenuItem = (doc: MenuItemDocument): MenuItem => ({
   id: doc.resourceId,
@@ -29,7 +29,9 @@ const toDomainMenuItem = (doc: MenuItemDocument): MenuItem => ({
   isAvailable: doc.isAvailable,
 });
 
-export const createCartSummaryBuilder = (collections: TenantCollections): CartSummaryBuilder => {
+export const createMongoCartSummaryBuilder = (
+  collections: TenantCollections,
+): CartSummaryBuilder => {
   const menuItemsCollection = collections.menuItems as TenantCollection<MenuItemDocument>;
 
   const buildSummary: CartSummaryBuilder = async (cart: Cart): Promise<CartSummary> => {

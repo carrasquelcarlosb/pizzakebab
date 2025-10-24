@@ -11,6 +11,6 @@ export interface KitchenTicketPayload {
   channels?: string[];
 }
 
-export interface KitchenGateway {
-  enqueue(payload: KitchenTicketPayload): Promise<void>;
+export interface KitchenNotifier {
+  notify(payload: KitchenTicketPayload): Promise<void>;
 }

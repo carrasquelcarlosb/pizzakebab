@@ -1,8 +1,8 @@
-import { TenantCollection, TenantCollections } from '../../db/mongo';
-import { OrderDocument } from '../../db/schemas';
-import { OrderRepository, OrderCreation } from '../../domain';
+import { TenantCollection, TenantCollections } from '../db/mongo';
+import { OrderDocument } from '../db/schemas';
+import { OrderRepository, OrderCreation } from '../domain';
 
-export const createOrderRepository = (collections: TenantCollections): OrderRepository => {
+export const createMongoOrderRepository = (collections: TenantCollections): OrderRepository => {
   const orders = collections.orders as TenantCollection<OrderDocument>;
 
   return {

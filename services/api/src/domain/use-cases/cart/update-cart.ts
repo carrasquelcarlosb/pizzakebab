@@ -1,6 +1,7 @@
 import { Cart, CartSummary } from '../../models/cart';
 import { CartSummaryBuilder } from '../../ports/cart-summary-builder';
 import { CartRepository } from '../../ports/cart-repository';
+import { TenantContextProvider } from '../../ports/tenant-context-provider';
 import { CartClosedError, CartNotFoundError, CartUpdateError } from '../../errors';
 import { normalizeCartItems } from '../../services/cart-summary';
 
@@ -12,8 +13,7 @@ export interface UpdateCartInput {
 }
 
 export interface UpdateCartDependencies {
-  cartRepository: CartRepository;
-  summaryBuilder: CartSummaryBuilder;
+  tenantContext: TenantContextProvider;
 }
 
 export interface UpdateCartResult {
@@ -21,12 +21,24 @@ export interface UpdateCartResult {
   summary: CartSummary;
 }
 
+const resolveDependencies = async (
+  provider: TenantContextProvider,
+): Promise<{ cartRepository: CartRepository; summaryBuilder: CartSummaryBuilder }> => {
+  const [cartRepository, summaryBuilder] = await Promise.all([
+    provider.getCartRepository(),
+    provider.getCartSummaryBuilder(),
+  ]);
+  return { cartRepository, summaryBuilder };
+};
+
 export const updateCart = async (
   deps: UpdateCartDependencies,
   input: UpdateCartInput,
 ): Promise<UpdateCartResult> => {
-  const { cartRepository, summaryBuilder } = deps;
+  const { tenantContext } = deps;
   const { cartId } = input;
+
+  const { cartRepository, summaryBuilder } = await resolveDependencies(tenantContext);
 
   let cart = await cartRepository.findById(cartId);
   if (!cart) {

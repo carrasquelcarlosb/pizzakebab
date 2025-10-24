@@ -8,12 +8,6 @@ import {
   OrderSubmissionError,
   submitOrder,
 } from '../domain';
-import {
-  createCartRepository,
-  createCartSummaryBuilder,
-  createKitchenGateway,
-  createOrderRepository,
-} from '../services/domain';
 
 type SubmitOrderBody = {
   cartId: string;
@@ -141,19 +135,10 @@ export default async function ordersRoutes(app: FastifyInstance): Promise<void> 
       },
     },
     async (request, reply) => {
-      const collections = await request.getTenantCollections();
-      const cartRepository = createCartRepository(collections);
-      const summaryBuilder = createCartSummaryBuilder(collections);
-      const orderRepository = createOrderRepository(collections);
-      const kitchenGateway = createKitchenGateway(request.tenantId, collections, request.log);
-
       try {
         const receipt = await submitOrder(
           {
-            cartRepository,
-            orderRepository,
-            summaryBuilder,
-            kitchenGateway,
+            tenantContext: request.getTenantContext(),
             idGenerator: randomUUID,
             now: () => new Date(),
           },

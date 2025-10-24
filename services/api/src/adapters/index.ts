@@ -1,4 +1,5 @@
 export * from './cart-repository';
 export * from './cart-summary-builder';
 export * from './order-repository';
-export * from './kitchen-gateway';
+export * from './kitchen-notifier';
+export * from './request-tenant-context-provider';
