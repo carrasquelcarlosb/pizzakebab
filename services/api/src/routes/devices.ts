@@ -343,6 +343,14 @@ export default async function devicesRoutes(app: FastifyInstance): Promise<void>
             ],
             additionalProperties: false,
           },
+          404: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+            required: ['message'],
+            additionalProperties: false,
+          },
         },
       },
     },
@@ -363,6 +371,11 @@ export default async function devicesRoutes(app: FastifyInstance): Promise<void>
         status,
         notes: notes ?? undefined,
       });
+
+      if (!acknowledgement) {
+        reply.code(404);
+        return { message: 'Ticket not found' };
+      }
 
       return acknowledgement;
     },

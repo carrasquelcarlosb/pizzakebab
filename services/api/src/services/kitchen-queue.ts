@@ -192,7 +192,12 @@ export const acknowledgeKitchenTicket = async (
   collections: TenantCollections,
   ticketId: string,
   input: TicketAcknowledgementInput,
-): Promise<TicketAcknowledgementView> => {
+): Promise<TicketAcknowledgementView | null> => {
+  const ticket = await collections.kitchenTickets.findOne({ resourceId: ticketId });
+  if (!ticket) {
+    return null;
+  }
+
   const resourceId = randomUUID();
   const acknowledgedAt = new Date();
 
@@ -205,10 +210,59 @@ export const acknowledgeKitchenTicket = async (
     acknowledgedAt,
   });
 
-  const persisted = await collections.ticketAcknowledgements.findOne({ resourceId });
-  if (!persisted) {
-    throw new Error('Failed to persist ticket acknowledgement');
+  const update: Partial<KitchenTicketDocument> = {
+    acknowledgedBy: input.deviceId,
+  };
+
+  if (input.status === 'received' && ticket.status === 'pending') {
+    update.status = 'acknowledged';
+    update.acknowledgedAt = acknowledgedAt;
   }
 
-  return toTicketAcknowledgementView(persisted);
+  if (input.status === 'completed') {
+    update.status = 'completed';
+    update.acknowledgedAt = acknowledgedAt;
+  }
+
+  if (input.status === 'printing') {
+    update.printStatus = 'printing';
+  }
+
+  if (input.status === 'printed') {
+    update.printStatus = 'printed';
+    if (ticket.status === 'pending') {
+      update.status = 'acknowledged';
+    }
+    update.acknowledgedAt = acknowledgedAt;
+  }
+
+  if (input.status === 'failed') {
+    update.printStatus = 'failed';
+    update.retryCount = (ticket.retryCount ?? 0) + 1;
+  }
+
+  if (Object.keys(update).length > 0) {
+    await collections.kitchenTickets.updateOne(
+      { resourceId: ticketId },
+      { $set: update },
+    );
+  }
+
+  const updatedTicket = await collections.kitchenTickets.findOne({ resourceId: ticketId });
+  const persistedAcknowledgement = await collections.ticketAcknowledgements.findOne({ resourceId });
+
+  if (!updatedTicket || !persistedAcknowledgement) {
+    throw new Error('Failed to load acknowledgement result');
+  }
+
+  const acknowledgementView = toTicketAcknowledgementView(persistedAcknowledgement);
+  const ticketView = toKitchenTicketView(updatedTicket);
+
+  ticketStream.publish(ticket.tenantId, {
+    type: 'ticket.acknowledged',
+    ticket: ticketView,
+    acknowledgement: acknowledgementView,
+  });
+
+  return acknowledgementView;
 };
