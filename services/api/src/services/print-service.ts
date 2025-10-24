@@ -95,20 +95,16 @@ class PrintServiceWorker {
       return;
     }
 
-    const startResult = await acknowledgeKitchenTicket(printer.tenantId, collections, this.app.log, {
+    await acknowledgeKitchenTicket(collections, ticket.resourceId, {
       ticketId: ticket.resourceId,
       deviceId: printer.resourceId,
       status: 'printing',
       notes: 'Print job started by service worker',
     });
 
-    if (!startResult) {
-      return;
-    }
-
     try {
       await this.printTicket(printer, ticket);
-      await acknowledgeKitchenTicket(printer.tenantId, collections, this.app.log, {
+      await acknowledgeKitchenTicket(collections, ticket.resourceId, {
         ticketId: ticket.resourceId,
         deviceId: printer.resourceId,
         status: 'printed',
@@ -120,7 +116,7 @@ class PrintServiceWorker {
         { err: error, ticketId: ticket.resourceId, deviceId: printer.resourceId },
         'printer worker failed to print ticket',
       );
-      await acknowledgeKitchenTicket(printer.tenantId, collections, this.app.log, {
+      await acknowledgeKitchenTicket(collections, ticket.resourceId, {
         ticketId: ticket.resourceId,
         deviceId: printer.resourceId,
         status: 'failed',
