@@ -35,6 +35,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
+  "references": [
+    { "path": "./packages/domain-types" }
+  ],
   "exclude": [
     "node_modules",
     "services/api/**/*"

@@ -1,4 +1,4 @@
-import { Cart, CartSummary } from '../models/cart';
+import { Cart, CartSummary } from '@pizzakebab/domain-types';
 
 export interface SerializedCartItem {
   menuItemId: string;

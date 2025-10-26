@@ -1,4 +1,9 @@
-import { PromotionDefinition, PromotionEvaluator, PromotionResult, PromotionType } from '../models/promotion';
+import {
+  PromotionDefinition,
+  PromotionEvaluator,
+  PromotionResult,
+  PromotionType,
+} from '@pizzakebab/domain-types';
 
 const clampDiscount = (amount: number, ceiling: number): number => {
   if (amount <= 0) {

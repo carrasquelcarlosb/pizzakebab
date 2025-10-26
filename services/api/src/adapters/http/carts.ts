@@ -1,3 +1,5 @@
+import type { CartResponseDto, CreateCartDto, UpdateCartDto } from '@pizzakebab/domain-types';
+
 import {
   EnsureCartInput,
   EnsureCartResult,
@@ -6,22 +8,6 @@ import {
   UpdateCartResult,
   serializeCart,
 } from '../../domain';
-
-export interface CreateCartDto {
-  deviceId?: string;
-  sessionId?: string;
-  userId?: string;
-  promoCode?: string | null;
-}
-
-export interface UpdateCartDto {
-  items?: Array<{
-    menuItemId: string;
-    quantity: number;
-    notes?: string;
-  }>;
-  promoCode?: string | null;
-}
 
 type CartUseCaseResult = EnsureCartResult | GetCartResult | UpdateCartResult;
 
@@ -41,6 +27,6 @@ export const mapUpdateCartRequest = (cartId: string, body: UpdateCartDto): Updat
   shouldUpdatePromoCode: Object.prototype.hasOwnProperty.call(body, 'promoCode'),
 });
 
-export const mapCartResultToResponse = (result: CartUseCaseResult) => ({
+export const mapCartResultToResponse = (result: CartUseCaseResult): CartResponseDto => ({
   cart: serializeCart(result.cart, result.summary),
 });

@@ -4,7 +4,7 @@ import { CartRepository } from '../../ports/cart-repository';
 import { KitchenNotifier } from '../../ports/kitchen-notifier';
 import { OrderRepository } from '../../ports/order-repository';
 import { TenantContextProvider } from '../../ports/tenant-context-provider';
-import { OrderReceipt } from '../../models/order';
+import { OrderReceipt } from '@pizzakebab/domain-types';
 
 export interface SubmitOrderInput {
   cartId: string;

@@ -39,5 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 services/api/dist
+packages/domain-types/dist
 next-env.d.ts
 /.cursor
