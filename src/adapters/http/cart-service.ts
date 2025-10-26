@@ -7,18 +7,11 @@ import type {
   SubmitOrderCommand,
   UpdateCartCommand,
 } from "@/domain/cart"
-
-interface CartResponse {
-  cart: Cart
-}
-
-interface OrderResponse {
-  order: Order
-}
+import type { CartResponseDto, OrderResponseDto } from "@pizzakebab/domain-types"
 
 export class HttpCartService implements CartService {
   async createOrGetCart(payload: CreateCartCommand): Promise<Cart> {
-    const response = await apiFetch<CartResponse>("/carts", {
+    const response = await apiFetch<CartResponseDto>("/carts", {
       method: "POST",
       body: JSON.stringify(payload),
     })
@@ -26,12 +19,12 @@ export class HttpCartService implements CartService {
   }
 
   async getCart(cartId: string): Promise<Cart> {
-    const response = await apiFetch<CartResponse>(`/carts/${cartId}`)
+    const response = await apiFetch<CartResponseDto>(`/carts/${cartId}`)
     return response.cart
   }
 
   async updateCart(cartId: string, payload: UpdateCartCommand): Promise<Cart> {
-    const response = await apiFetch<CartResponse>(`/carts/${cartId}`, {
+    const response = await apiFetch<CartResponseDto>(`/carts/${cartId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     })
@@ -39,7 +32,7 @@ export class HttpCartService implements CartService {
   }
 
   async submitOrder(payload: SubmitOrderCommand): Promise<Order> {
-    const response = await apiFetch<OrderResponse>("/orders", {
+    const response = await apiFetch<OrderResponseDto>("/orders", {
       method: "POST",
       body: JSON.stringify(payload),
     })

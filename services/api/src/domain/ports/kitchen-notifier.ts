@@ -1,5 +1,4 @@
-import { CartSummary } from '../models/cart';
-import { OrderCustomerDetails } from '../models/order';
+import { CartSummary, OrderCustomerDetails } from '@pizzakebab/domain-types';
 
 export interface KitchenTicketPayload {
   orderId: string;

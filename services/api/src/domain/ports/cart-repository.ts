@@ -1,4 +1,4 @@
-import { Cart, CartStatus } from '../models/cart';
+import { Cart, CartStatus } from '@pizzakebab/domain-types';
 
 export interface CartIdentifiers {
   deviceId?: string;

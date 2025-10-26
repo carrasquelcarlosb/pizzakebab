@@ -1,15 +1,6 @@
-import { OrderReceipt, SubmitOrderInput } from '../../domain';
+import type { OrderResponseDto, SubmitOrderDto } from '@pizzakebab/domain-types';
 
-export interface SubmitOrderDto {
-  cartId: string;
-  promoCode?: string | null;
-  notes?: string;
-  customer?: {
-    name?: string;
-    phone?: string;
-    email?: string;
-  };
-}
+import { OrderReceipt, SubmitOrderInput } from '../../domain';
 
 export const mapSubmitOrderRequest = (body: SubmitOrderDto): SubmitOrderInput => ({
   cartId: body.cartId,
@@ -18,7 +9,7 @@ export const mapSubmitOrderRequest = (body: SubmitOrderDto): SubmitOrderInput =>
   customer: body.customer,
 });
 
-export const mapOrderReceiptToResponse = (receipt: OrderReceipt) => ({
+export const mapOrderReceiptToResponse = (receipt: OrderReceipt): OrderResponseDto => ({
   order: {
     id: receipt.order.id,
     cartId: receipt.order.cartId,

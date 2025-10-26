@@ -1,6 +1,11 @@
-import { Cart, CartItem, CartSummary, HydratedCartItem } from '../models/cart';
-import { MenuItem } from '../models/menu';
-import { PromotionEvaluator } from '../models/promotion';
+import {
+  Cart,
+  CartItem,
+  CartSummary,
+  HydratedCartItem,
+  MenuItem,
+  PromotionEvaluator,
+} from '@pizzakebab/domain-types';
 
 const DEFAULT_CURRENCY = 'USD';
 const DEFAULT_DELIVERY_FEE = 2.99;

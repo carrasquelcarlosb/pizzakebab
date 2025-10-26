@@ -3,16 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build:types": "tsc -b packages/domain-types/tsconfig.json",
     "dev": "next dev --turbo",
+    "predev": "npm run build:types",
     "build": "next build",
+    "prebuild": "npm run build:types",
     "start": "next start",
+    "prestart": "npm run build:types",
     "lint": "next lint",
     "test": "node --import tsx --test",
-    "type-check": "tsc --noEmit",
+    "pretest": "npm run build:types",
+    "type-check": "npm run build:types && tsc --noEmit",
     "analyze": "ANALYZE=true npm run build",
     "api:dev": "tsx services/api/src/index.ts",
+    "preapi:dev": "npm run build:types",
     "api:build": "tsc -p services/api/tsconfig.json",
-    "api:start": "node services/api/dist/index.js"
+    "preapi:build": "npm run build:types",
+    "api:start": "node services/api/dist/index.js",
+    "preapi:start": "npm run build:types"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",
@@ -52,7 +60,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.0.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "@pizzakebab/domain-types": "file:packages/domain-types"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.0.0",

@@ -1,4 +1,4 @@
-import { Cart, CartSummary } from '../../models/cart';
+import { Cart, CartSummary } from '@pizzakebab/domain-types';
 import { CartSummaryBuilder } from '../../ports/cart-summary-builder';
 import { CartIdentifiers, CartRepository, CreateCartInput } from '../../ports/cart-repository';
 import { TenantContextProvider } from '../../ports/tenant-context-provider';

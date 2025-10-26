@@ -1,4 +1,4 @@
-import { OrderCreation } from '../models/order';
+import { OrderCreation } from '@pizzakebab/domain-types';
 
 export interface OrderRepository {
   create(input: OrderCreation): Promise<void>;

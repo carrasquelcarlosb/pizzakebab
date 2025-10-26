@@ -1,4 +1,4 @@
-import { PromotionDefinition, PromotionResult } from '../models/promotion';
+import { PromotionDefinition, PromotionResult } from '@pizzakebab/domain-types';
 import { createPromotionEvaluator } from './promotion';
 
 const PROMOTIONS: Record<string, PromotionDefinition> = {
