@@ -1,0 +1,7 @@
+{
+  "name": "pino",
+  "version": "9.14.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT"
+}
