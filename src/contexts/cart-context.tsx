@@ -11,15 +11,8 @@ import {
   type ReactNode,
 } from "react"
 
-import {
-  createOrGetCart,
-  updateCart,
-  getCart,
-  submitOrder,
-  type CartApi,
-  type CartLineItem,
-  type CartResponse,
-} from "@/lib/api/cart"
+import type { Cart, CartLineItem, SubmitOrderCommand, CartService } from "@/domain/cart"
+import { httpCartService } from "@/adapters/http/cart-service"
 import { type CartItem, type OrderMode, DEFAULT_DELIVERY_FEE } from "@/lib/cart"
 import { useLanguage } from "./language-context"
 import type { TranslationKey } from "@/lib/translations"
@@ -145,13 +138,20 @@ const mergeLineItems = (current: CartLineItem[], updates: Map<string, number>): 
   return Array.from(mergedMap.values())
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export interface CartProviderProps {
+  children: ReactNode
+  service?: CartService
+}
+
+export function CartProvider({ children, service }: CartProviderProps) {
   const { t } = useLanguage()
-  const [cart, setCart] = useState<CartApi | null>(null)
+  const [cart, setCart] = useState<Cart | null>(null)
   const [orderMode, setOrderMode] = useState<OrderMode>("delivery")
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const sessionIdRef = useRef<string | null>(null)
+
+  const cartService = useMemo(() => service ?? httpCartService, [service])
 
   const initializeCart = useCallback(async () => {
     setIsLoading(true)
@@ -159,29 +159,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!sessionIdRef.current) {
         sessionIdRef.current = ensureSessionId()
       }
-      const response = await createOrGetCart({ sessionId: sessionIdRef.current })
-      setCart(response.cart)
+      const created = await cartService.createOrGetCart({ sessionId: sessionIdRef.current })
+      setCart(created)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load cart")
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [cartService])
 
   useEffect(() => {
     void initializeCart()
   }, [initializeCart])
 
-  const syncCart = useCallback(async (operation: () => Promise<CartResponse | void>) => {
+  const syncCart = useCallback(async (operation: () => Promise<Cart | void>) => {
     setIsLoading(true)
     try {
       const result = await operation()
-      if (result && "cart" in result) {
-        setCart(result.cart)
+      if (result) {
+        setCart(result)
       } else if (cart?.id) {
-        const refreshed = await getCart(cart.id)
-        setCart(refreshed.cart)
+        const refreshed = await cartService.getCart(cart.id)
+        setCart(refreshed)
       }
       setError(null)
     } catch (err) {
@@ -190,7 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [cart?.id])
+  }, [cart?.id, cartService])
 
   const updateCartItems = useCallback(
     async (updater: (current: CartLineItem[]) => CartLineItem[]) => {
@@ -199,10 +199,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       await syncCart(async () => {
         const nextItems = updater(cart.items)
-        return updateCart(cart.id, { items: toCartUpdateItems(nextItems) })
+        return cartService.updateCart(cart.id, { items: toCartUpdateItems(nextItems) })
       })
     },
-    [cart, syncCart],
+    [cart, cartService, syncCart],
   )
 
   const addItem = useCallback<Required<CartContextValue>["addItem"]>(
@@ -242,17 +242,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!cart?.id) {
       return
     }
-    await syncCart(() => updateCart(cart.id, { items: [] }))
-  }, [cart?.id, syncCart])
+    await syncCart(() => cartService.updateCart(cart.id, { items: [] }))
+  }, [cart?.id, cartService, syncCart])
 
   const applyPromoCode = useCallback<Required<CartContextValue>["applyPromoCode"]>(
     async (code) => {
       if (!cart?.id) {
         return
       }
-      await syncCart(() => updateCart(cart.id, { promoCode: code }))
+      await syncCart(() => cartService.updateCart(cart.id, { promoCode: code }))
     },
-    [cart?.id, syncCart],
+    [cart?.id, cartService, syncCart],
   )
 
   const refreshCart = useCallback(async () => {
@@ -262,15 +262,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setIsLoading(true)
     try {
-      const refreshed = await getCart(cart.id)
-      setCart(refreshed.cart)
+      const refreshed = await cartService.getCart(cart.id)
+      setCart(refreshed)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to refresh cart")
     } finally {
       setIsLoading(false)
     }
-  }, [cart?.id, initializeCart])
+  }, [cart?.id, cartService, initializeCart])
 
   const submitCurrentOrder = useCallback<Required<CartContextValue>["submitCurrentOrder"]>(
     async (params) => {
@@ -278,21 +278,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return
       }
       await syncCart(async () => {
-        await submitOrder({
+        const submitPayload: SubmitOrderCommand = {
           cartId: cart.id,
-          promoCode: cart.promoCode,
+          promoCode: cart.promoCode ?? null,
           notes: params?.notes,
           customer: params?.customer,
-        })
-        setCart(null)
+        }
+        await cartService.submitOrder(submitPayload)
         sessionIdRef.current = null
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(CART_SESSION_STORAGE_KEY)
         }
-        return createOrGetCart({ sessionId: ensureSessionId() })
+        const nextSessionId = ensureSessionId()
+        sessionIdRef.current = nextSessionId
+        return cartService.createOrGetCart({ sessionId: nextSessionId })
       })
     },
-    [cart, syncCart],
+    [cart, cartService, syncCart],
   )
 
   const displayItems = useMemo(() => toDisplayItems(cart?.items ?? [], t), [cart?.items, t])

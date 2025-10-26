@@ -1,4 +1,3 @@
-import { apiFetch } from "@/lib/api-client"
 import type { TranslationKey } from "@/lib/translations"
 
 export interface CartMenuItem {
@@ -41,12 +40,14 @@ export interface AppliedPromotion {
   description?: string
 }
 
-export interface CartApi {
+export type CartStatus = "open" | "checked_out"
+
+export interface Cart {
   id: string
   deviceId: string
   sessionId?: string | null
   userId?: string | null
-  status: "open" | "checked_out"
+  status: CartStatus
   promoCode?: string | null
   createdAt: string
   updatedAt: string
@@ -55,38 +56,30 @@ export interface CartApi {
   promotion?: AppliedPromotion | null
 }
 
-export interface CartResponse {
-  cart: CartApi
+export interface Order {
+  id: string
+  cartId: string
+  status: string
+  total: number
+  currency: string
+  submittedAt: string
+  promotion?: AppliedPromotion | null
+  totals: CartTotals
 }
 
-export interface CreateCartPayload {
+export interface CreateCartCommand {
   deviceId?: string
   sessionId?: string
   userId?: string
   promoCode?: string
 }
 
-export interface UpdateCartPayload {
+export interface UpdateCartCommand {
   items?: Array<{ menuItemId: string; quantity: number; notes?: string }>
   promoCode?: string | null
 }
 
-export const createOrGetCart = (payload: CreateCartPayload): Promise<CartResponse> =>
-  apiFetch<CartResponse>("/carts", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-
-export const getCart = (cartId: string): Promise<CartResponse> =>
-  apiFetch<CartResponse>(`/carts/${cartId}`)
-
-export const updateCart = (cartId: string, payload: UpdateCartPayload): Promise<CartResponse> =>
-  apiFetch<CartResponse>(`/carts/${cartId}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  })
-
-export interface SubmitOrderPayload {
+export interface SubmitOrderCommand {
   cartId: string
   promoCode?: string | null
   notes?: string
@@ -96,23 +89,3 @@ export interface SubmitOrderPayload {
     email?: string
   }
 }
-
-export interface OrderResponse {
-  order: {
-    id: string
-    cartId: string
-    status: string
-    total: number
-    currency: string
-    submittedAt: string
-    promotion?: AppliedPromotion | null
-    totals: CartTotals
-  }
-}
-
-export const submitOrder = (payload: SubmitOrderPayload): Promise<OrderResponse> =>
-  apiFetch<OrderResponse>("/orders", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  })
-
