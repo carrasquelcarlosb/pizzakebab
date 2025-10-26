@@ -26,6 +26,23 @@ Optional checks:
 - `npm run lint` to execute ESLint (lint errors are currently ignored during the build).
 - `npm run type-check` to run TypeScript in `--noEmit` mode.
 
+## Hexagonal architecture onboarding
+
+The code base is being reorganized into a ports-and-adapters (hexagonal) layout. Use the following guidance when adding
+or updating features:
+
+- **Add a new use case**: create a folder under `src/domain/<bounded-context>/use-cases/`, codify the business rules, and
+  expose a single entry point (function or class). Define any required dependencies as outgoing ports under
+  `src/domain/<bounded-context>/ports/`. Keep the implementation framework-agnostic and covered by colocated unit tests.
+- **Add an adapter**: implement the port in `src/adapters/<technology>/<bounded-context>/`. Translate between the
+  transport or infrastructure details (HTTP request, queue message, persistence layer) and the domain model. Provide a
+  factory or wiring function that assembles the use case with its concrete dependencies.
+- **Add tests**: colocate unit tests with the domain module (`*.spec.ts`) and mock outgoing ports. Integration tests that
+  exercise adapters can live in `tests/` or the relevant adapter folder. Avoid importing legacy services once a feature
+  has been migrated.
+
+See `docs/architecture/hexagonal.md` for a deeper explanation of the layering conventions and migration checklists.
+
 ## Experimental feature flags
 
 The default configuration ships without Partial Prerendering (PPR) or the React Compiler to avoid the `CanaryOnlyError`
