@@ -1,24 +1,14 @@
 import { FastifyInstance, FastifyReply } from 'fastify';
 import { randomUUID } from 'crypto';
 
+import { CartClosedError, CartNotFoundError, OrderSubmissionError, submitOrder } from '../domain';
 import {
-  CartClosedError,
-  CartNotFoundError,
-  OrderReceipt,
-  OrderSubmissionError,
-  submitOrder,
-} from '../domain';
+  SubmitOrderDto,
+  mapOrderReceiptToResponse,
+  mapSubmitOrderRequest,
+} from '../adapters/http/orders';
 
-type SubmitOrderBody = {
-  cartId: string;
-  promoCode?: string | null;
-  notes?: string;
-  customer?: {
-    name?: string;
-    phone?: string;
-    email?: string;
-  };
-};
+type SubmitOrderBody = SubmitOrderDto;
 
 const customerSchema = {
   type: 'object',
@@ -85,19 +75,6 @@ const orderResponseSchema = {
   additionalProperties: false,
 } as const;
 
-const serializeOrder = (receipt: OrderReceipt) => ({
-  id: receipt.order.id,
-  cartId: receipt.order.cartId,
-  status: receipt.order.status,
-  total: receipt.order.total,
-  currency: receipt.order.currency,
-  submittedAt: receipt.order.submittedAt.toISOString(),
-  promotion: receipt.order.promotion,
-  totals: receipt.order.totals,
-  customer: receipt.order.customer,
-  notes: receipt.order.notes,
-});
-
 const handleOrderError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof CartNotFoundError) {
     reply.code(404);
@@ -142,18 +119,11 @@ export default async function ordersRoutes(app: FastifyInstance): Promise<void> 
             idGenerator: randomUUID,
             now: () => new Date(),
           },
-          {
-            cartId: request.body.cartId,
-            promoCode: request.body.promoCode ?? null,
-            customer: request.body.customer,
-            notes: request.body.notes,
-          },
+          mapSubmitOrderRequest(request.body),
         );
 
         reply.code(201);
-        return {
-          order: serializeOrder(receipt),
-        };
+        return mapOrderReceiptToResponse(receipt);
       } catch (error) {
         return handleOrderError(reply, error);
       }

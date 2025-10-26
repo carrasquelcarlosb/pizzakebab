@@ -7,25 +7,19 @@ import {
   CartUpdateError,
   ensureCart as ensureCartUseCase,
   getActiveCart,
-  serializeCart,
   updateCart as updateCartUseCase,
 } from '../domain';
+import {
+  CreateCartDto,
+  UpdateCartDto,
+  mapCartResultToResponse,
+  mapCreateCartRequest,
+  mapUpdateCartRequest,
+} from '../adapters/http/carts';
 
-type CreateCartBody = {
-  deviceId?: string;
-  sessionId?: string;
-  userId?: string;
-  promoCode?: string;
-};
+type CreateCartBody = CreateCartDto;
 
-type UpdateCartBody = {
-  items?: Array<{
-    menuItemId: string;
-    quantity: number;
-    notes?: string;
-  }>;
-  promoCode?: string | null;
-};
+type UpdateCartBody = UpdateCartDto;
 
 const promotionSchema = {
   type: ['object', 'null'],
@@ -157,12 +151,6 @@ const cartParamsSchema = {
   additionalProperties: false,
 } as const;
 
-const toIdentifiers = (body: CreateCartBody) => ({
-  deviceId: body.deviceId,
-  sessionId: body.sessionId,
-  userId: body.userId,
-});
-
 const handleCartError = (reply: FastifyReply, error: unknown) => {
   if (error instanceof CartNotFoundError) {
     reply.code(404);
@@ -192,17 +180,14 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request) => {
-      const { cart, summary } = await ensureCartUseCase(
+      const result = await ensureCartUseCase(
         {
           tenantContext: request.getTenantContext(),
           idGenerator: randomUUID,
         },
-        {
-          identifiers: toIdentifiers(request.body),
-          promoCode: request.body.promoCode ?? null,
-        },
+        mapCreateCartRequest(request.body),
       );
-      return { cart: serializeCart(cart, summary) };
+      return mapCartResultToResponse(result);
     },
   );
 
@@ -218,11 +203,11 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
       const { cartId } = request.params as { cartId: string };
 
       try {
-        const { cart, summary } = await getActiveCart(
+        const result = await getActiveCart(
           { tenantContext: request.getTenantContext() },
           cartId,
         );
-        return { cart: serializeCart(cart, summary) };
+        return mapCartResultToResponse(result);
       } catch (error) {
         return handleCartError(reply, error);
       }
@@ -242,16 +227,11 @@ export default async function cartsRoutes(app: FastifyInstance): Promise<void> {
       const { cartId } = request.params;
 
       try {
-        const { cart, summary } = await updateCartUseCase(
+        const result = await updateCartUseCase(
           { tenantContext: request.getTenantContext() },
-          {
-            cartId,
-            items: request.body.items,
-            promoCode: request.body.promoCode ?? null,
-            shouldUpdatePromoCode: Object.prototype.hasOwnProperty.call(request.body, 'promoCode'),
-          },
+          mapUpdateCartRequest(cartId, request.body),
         );
-        return { cart: serializeCart(cart, summary) };
+        return mapCartResultToResponse(result);
       } catch (error) {
         return handleCartError(reply, error);
       }
