@@ -13,6 +13,8 @@
     "lint": "next lint",
     "test": "node --import tsx --test",
     "pretest": "npm run build:types",
+    "pretest:domain": "npm run build:types",
+    "test:domain": "node --import tsx --test services/api/tests/domain/**/*.test.ts tests/frontend/domain/**/*.test.ts",
     "type-check": "npm run build:types && tsc --noEmit",
     "analyze": "ANALYZE=true npm run build",
     "api:dev": "tsx services/api/src/index.ts",
