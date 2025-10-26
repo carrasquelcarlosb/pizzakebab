@@ -28,20 +28,29 @@ Optional checks:
 
 ## Hexagonal architecture onboarding
 
-The code base is being reorganized into a ports-and-adapters (hexagonal) layout. Use the following guidance when adding
-or updating features:
+The code base is being reorganized into a ports-and-adapters (hexagonal) layout. The React app under `src/` and the
+Fastify API under `services/api/` share the same principles, even though migrations are in-flight. Use the following
+guidance when adding or updating features:
 
-- **Add a new use case**: create a folder under `src/domain/<bounded-context>/use-cases/`, codify the business rules, and
-  expose a single entry point (function or class). Define any required dependencies as outgoing ports under
-  `src/domain/<bounded-context>/ports/`. Keep the implementation framework-agnostic and covered by colocated unit tests.
-- **Add an adapter**: implement the port in `src/adapters/<technology>/<bounded-context>/`. Translate between the
-  transport or infrastructure details (HTTP request, queue message, persistence layer) and the domain model. Provide a
-  factory or wiring function that assembles the use case with its concrete dependencies.
-- **Add tests**: colocate unit tests with the domain module (`*.spec.ts`) and mock outgoing ports. Integration tests that
-  exercise adapters can live in `tests/` or the relevant adapter folder. Avoid importing legacy services once a feature
-  has been migrated.
+- **Add a new use case**:
+  - For UI-facing flows, create a folder under `src/domain/<bounded-context>/use-cases/`. For the API service, place the
+    module under `services/api/src/domain/<bounded-context>/use-cases/`.
+  - Codify business rules as pure functions or classes. Define required dependencies as outgoing ports in the sibling
+    `ports/` directory and surface an incoming port (the exported function or class).
+  - Reuse shared domain types from `packages/domain-types` when cross-cutting contracts are needed.
+- **Add an adapter**:
+  - UI adapters (server actions, React hooks, data loaders) belong in `src/adapters/<technology>/<bounded-context>/`.
+  - API adapters (HTTP handlers, persistence, queue bridges) live in `services/api/src/adapters/` and wire the Fastify
+    plugins to the domain ports.
+  - Keep adapters responsible for translating framework or transport specifics into domain-friendly structures and for
+    instantiating use cases with concrete dependencies.
+- **Add tests**:
+  - Prefer colocated unit tests next to the domain module (`*.spec.ts`/`*.test.ts`), mocking outgoing ports.
+  - Node's built-in test runner (via `npm test`) executes top-level suites under `tests/` as well as Fastify-specific
+    suites in `services/api/tests/`. Use integration tests to exercise adapter wiring and end-to-end workflows.
+  - Avoid importing legacy services once a feature has been migrated to a domain use case.
 
-See `docs/architecture/hexagonal.md` for a deeper explanation of the layering conventions and migration checklists.
+See `docs/architecture/hexagonal.md` for detailed layering conventions, directory maps, and migration checklists.
 
 ## Experimental feature flags
 
