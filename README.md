@@ -26,6 +26,32 @@ Optional checks:
 - `npm run lint` to execute ESLint (lint errors are currently ignored during the build).
 - `npm run type-check` to run TypeScript in `--noEmit` mode.
 
+## Hexagonal architecture onboarding
+
+The code base is being reorganized into a ports-and-adapters (hexagonal) layout. The React app under `src/` and the
+Fastify API under `services/api/` share the same principles, even though migrations are in-flight. Use the following
+guidance when adding or updating features:
+
+- **Add a new use case**:
+  - For UI-facing flows, create a folder under `src/domain/<bounded-context>/use-cases/`. For the API service, place the
+    module under `services/api/src/domain/<bounded-context>/use-cases/`.
+  - Codify business rules as pure functions or classes. Define required dependencies as outgoing ports in the sibling
+    `ports/` directory and surface an incoming port (the exported function or class).
+  - Reuse shared domain types from `packages/domain-types` when cross-cutting contracts are needed.
+- **Add an adapter**:
+  - UI adapters (server actions, React hooks, data loaders) belong in `src/adapters/<technology>/<bounded-context>/`.
+  - API adapters (HTTP handlers, persistence, queue bridges) live in `services/api/src/adapters/` and wire the Fastify
+    plugins to the domain ports.
+  - Keep adapters responsible for translating framework or transport specifics into domain-friendly structures and for
+    instantiating use cases with concrete dependencies.
+- **Add tests**:
+  - Prefer colocated unit tests next to the domain module (`*.spec.ts`/`*.test.ts`), mocking outgoing ports.
+  - Node's built-in test runner (via `npm test`) executes top-level suites under `tests/` as well as Fastify-specific
+    suites in `services/api/tests/`. Use integration tests to exercise adapter wiring and end-to-end workflows.
+  - Avoid importing legacy services once a feature has been migrated to a domain use case.
+
+See `docs/architecture/hexagonal.md` for detailed layering conventions, directory maps, and migration checklists.
+
 ## Experimental feature flags
 
 The default configuration ships without Partial Prerendering (PPR) or the React Compiler to avoid the `CanaryOnlyError`
