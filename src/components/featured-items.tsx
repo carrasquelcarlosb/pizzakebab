@@ -1,76 +1,18 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Utensils } from "lucide-react"
 
 import { InteractiveMenuCard } from "@/components/interactive-menu-card"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
+import { getFeaturedMenuItems } from "@/lib/menu-data"
 
 export function FeaturedItems() {
   const { t } = useLanguage()
 
-  const featuredItems = [
-    {
-      id: 1,
-      name: t("food.spicyKebabPizza.name"),
-      description: t("food.spicyKebabPizza.description"),
-      price: 14.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("common.specialtyPizzas"),
-      rating: 4.8,
-      popular: true,
-    },
-    {
-      id: 2,
-      name: t("food.mixedGrillKebab.name"),
-      description: t("food.mixedGrillKebab.description"),
-      price: 16.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("categories.kebabs"),
-      rating: 4.7,
-    },
-    {
-      id: 3,
-      name: t("food.garlicCheeseBread.name"),
-      description: t("food.garlicCheeseBread.description"),
-      price: 5.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("categories.sides"),
-      rating: 4.5,
-    },
-    {
-      id: 4,
-      name: t("food.chickenShawarmaWrap.name"),
-      description: t("food.chickenShawarmaWrap.description"),
-      price: 9.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("categories.wraps"),
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      name: t("food.meatFeastPizza.name"),
-      description: t("food.meatFeastPizza.description"),
-      price: 15.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("common.specialtyPizzas"),
-      rating: 4.9,
-      popular: true,
-      discount: 10,
-    },
-    {
-      id: 6,
-      name: t("food.falafelWrap.name"),
-      description: t("food.falafelWrap.description"),
-      price: 8.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: t("common.vegetarian"),
-      rating: 4.4,
-      new: true,
-    },
-  ]
+  const featuredItems = useMemo(() => getFeaturedMenuItems(t), [t])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)

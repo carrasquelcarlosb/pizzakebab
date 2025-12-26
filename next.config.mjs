@@ -1,14 +1,27 @@
-/** @type {import('next').NextConfig} */
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
+
+const enableReactCompiler = process.env.NEXT_ENABLE_REACT_COMPILER === "true"
+const enablePartialPrerendering = process.env.NEXT_ENABLE_PPR === "true"
+
 const nextConfig = {
-  // Next.js 15 features
+  // Next.js experimental features are gated behind explicit opt-in flags.
   experimental: {
-    // Remove reactCompiler until you install babel-plugin-react-compiler
-    // reactCompiler: true,
-
-    // Remove ppr - only available in canary versions
-    // ppr: true,
-
-    // Server actions configuration
+    // Enable the React compiler only when React 19 is available in the runtime.
+    ...(enableReactCompiler ? { reactCompiler: true } : {}),
+    // Enable Turbopack for development
+    turbo: {
+      rules: {
+        "*.svg": {
+          loaders: ["@svgr/webpack"],
+          as: "*.js",
+        },
+      },
+    },
+    // Enable partial prerendering when running on a Next.js canary build.
+    ...(enablePartialPrerendering ? { ppr: true } : {}),
+    // Enable server actions
     serverActions: {
       allowedOrigins: ["localhost:3000", "pizzakebab.com"],
     },
@@ -29,6 +42,12 @@ const nextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
     unoptimized: true,
+  },
+
+  // Internationalization
+  i18n: {
+    locales: ["en", "fr", "de"],
+    defaultLocale: "en",
   },
 
   // Performance optimizations
@@ -79,6 +98,9 @@ const nextConfig = {
 
     // Bundle analyzer (optional)
     if (process.env.ANALYZE === "true") {
+  // Bundle analyzer (optional)
+  ...(process.env.ANALYZE === "true" && {
+    webpack: (config) => {
       config.plugins.push(
         new (require("@next/bundle-analyzer")({
           enabled: true,

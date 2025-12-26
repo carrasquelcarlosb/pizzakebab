@@ -35,10 +35,10 @@ yarn-error.log*
 
 # vercel
 .vercel
-.cursor
 
 # typescript
 *.tsbuildinfo
+services/api/dist
+packages/domain-types/dist
 next-env.d.ts
-github-deploy-key
-github-deploy-key.pub
+/.cursor

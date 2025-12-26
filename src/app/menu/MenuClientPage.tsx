@@ -1,137 +1,54 @@
 "use client"
-import React from 'react';
+
+import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InteractiveMenuCard } from "@/components/interactive-menu-card"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { LanguageProvider, useLanguage } from "@/contexts/language-context"
+import { useLanguage } from "@/contexts/language-context"
+import { AppProviders } from "@/components/app-providers"
+import { CartButton } from "@/components/cart-button"
+import { Button } from "@/components/ui/button"
+import { fetchMenus, type MenuApi } from "@/lib/api/menu"
+import { buildCategoryMap, CATEGORY_ORDER, isKnownCategory } from "@/lib/menu-transform"
 
 function MenuContent() {
   const { t } = useLanguage()
+  const [menus, setMenus] = useState<MenuApi[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Update menu items with translations
-  const menuItems = {
-    pizzas: [
-      {
-        id: 101,
-        name: t("food.spicyKebabPizza.name"),
-        description: t("food.spicyKebabPizza.description"),
-        price: 14.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("common.specialtyPizzas"),
-        rating: 4.8,
-        popular: true,
-      },
-      {
-        id: 102,
-        name: t("food.margherita.name"),
-        description: t("food.margherita.description"),
-        price: 11.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("common.classicPizzas"),
-        rating: 4.6,
-      },
-      {
-        id: 103,
-        name: t("food.meatFeastPizza.name"),
-        description: t("food.meatFeastPizza.description"),
-        price: 15.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("common.specialtyPizzas"),
-        discount: 10,
-        rating: 4.9,
-      },
-      {
-        id: 104,
-        name: t("food.veggieSupreme.name"),
-        description: t("food.veggieSupreme.description"),
-        price: 13.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("common.vegetarian"),
-        rating: 4.4,
-      },
-    ],
-    kebabs: [
-      {
-        id: 201,
-        name: t("food.mixedGrillKebab.name"),
-        description: t("food.mixedGrillKebab.description"),
-        price: 16.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.kebabs"),
-        rating: 4.7,
-      },
-      {
-        id: 202,
-        name: t("food.chickenShish.name"),
-        description: t("food.chickenShish.description"),
-        price: 13.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.kebabs"),
-        rating: 4.5,
-      },
-      {
-        id: 203,
-        name: t("food.lambKofte.name"),
-        description: t("food.lambKofte.description"),
-        price: 14.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.kebabs"),
-        discount: 15,
-        rating: 4.8,
-      },
-      {
-        id: 204,
-        name: t("food.vegetableKebab.name"),
-        description: t("food.vegetableKebab.description"),
-        price: 12.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("common.vegetarian"),
-        rating: 4.3,
-      },
-    ],
-    wraps: [
-      {
-        id: 301,
-        name: t("food.chickenShawarmaWrap.name"),
-        description: t("food.chickenShawarmaWrap.description"),
-        price: 9.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.wraps"),
-        rating: 4.6,
-      },
-      {
-        id: 302,
-        name: t("food.lambDonerWrap.name"),
-        description: t("food.lambDonerWrap.description"),
-        price: 10.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.wraps"),
-        rating: 4.4,
-      },
-    ],
-    sides: [
-      {
-        id: 401,
-        name: t("food.garlicCheeseBread.name"),
-        description: t("food.garlicCheeseBread.description"),
-        price: 5.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.sides"),
-        rating: 4.5,
-      },
-      {
-        id: 402,
-        name: t("food.spicyPotatoWedges.name"),
-        description: t("food.spicyPotatoWedges.description"),
-        price: 4.99,
-        image: "/placeholder.svg?height=300&width=300",
-        category: t("categories.sides"),
-        rating: 4.2,
-      },
-    ],
-  }
+  const loadMenus = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetchMenus()
+      setMenus(response.menus.filter((menu) => menu.isActive))
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load menu")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadMenus()
+  }, [loadMenus])
+
+  const sections = useMemo(() => buildCategoryMap(menus, t), [menus, t])
+
+  const categories = useMemo(() => {
+    const known = new Set<string>(CATEGORY_ORDER)
+    const extras = menus
+      .map((menu) => menu.id)
+      .filter((category) => !known.has(category))
+    return [...CATEGORY_ORDER, ...extras.filter((value, index, list) => list.indexOf(value) === index)]
+  }, [menus])
+
+  const defaultTab = categories[0] ?? CATEGORY_ORDER[0]
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -143,60 +60,59 @@ function MenuContent() {
           <div className="md:hidden">
             <MobileNav />
           </div>
+          <div className="flex items-center gap-4">
+            <CartButton />
+            <Link href="/login">
+              <Button variant="outline" className="hidden md:inline-flex rounded-full">
+                {t("nav.signIn")}
+              </Button>
+            </Link>
+            <Link href="/order">
+              <Button className="bg-red-600 hover:bg-red-700 rounded-full">{t("nav.orderNow")}</Button>
+            </Link>
+          </div>
         </div>
       </header>
       <main className="flex-1">
         <div className="container py-8">
           <h1 className="text-4xl font-bold mb-8">{t("menuPage.title")}</h1>
 
-          <Tabs defaultValue="pizzas" className="w-full">
-            <TabsList className="mb-8 flex flex-wrap h-auto">
-              <TabsTrigger value="pizzas" className="text-lg py-2 px-4">
-                {t("categories.pizzas")}
-              </TabsTrigger>
-              <TabsTrigger value="kebabs" className="text-lg py-2 px-4">
-                {t("categories.kebabs")}
-              </TabsTrigger>
-              <TabsTrigger value="wraps" className="text-lg py-2 px-4">
-                {t("categories.wraps")}
-              </TabsTrigger>
-              <TabsTrigger value="sides" className="text-lg py-2 px-4">
-                {t("categories.sides")}
-              </TabsTrigger>
-            </TabsList>
+          {isLoading ? (
+            <div className="py-16 text-center text-muted-foreground">Loading menu…</div>
+          ) : error ? (
+            <div className="py-16 text-center space-y-4">
+              <p className="text-red-600 font-semibold">{t("checkout.failure")}</p>
+              <p className="text-muted-foreground">{error}</p>
+              <Button onClick={() => void loadMenus()} variant="outline" className="rounded-full">
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <Tabs defaultValue={defaultTab} className="w-full">
+              <TabsList className="mb-8 flex flex-wrap h-auto">
+                {categories.map((category) => {
+                  const label = isKnownCategory(category)
+                    ? t(`categories.${category}` as const)
+                    : category
+                  return (
+                    <TabsTrigger key={category} value={category} className="text-lg py-2 px-4 capitalize">
+                      {label}
+                    </TabsTrigger>
+                  )
+                })}
+              </TabsList>
 
-            <TabsContent value="pizzas">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {menuItems.pizzas.map((item) => (
-                  <InteractiveMenuCard key={item.id} item={item} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="kebabs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {menuItems.kebabs.map((item) => (
-                  <InteractiveMenuCard key={item.id} item={item} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="wraps">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {menuItems.wraps.map((item) => (
-                  <InteractiveMenuCard key={item.id} item={item} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="sides">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {menuItems.sides.map((item) => (
-                  <InteractiveMenuCard key={item.id} item={item} />
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+              {categories.map((category) => (
+                <TabsContent key={category} value={category}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {(sections[category] ?? []).map((item) => (
+                      <InteractiveMenuCard key={`${category}-${item.id}`} item={item} />
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
         </div>
       </main>
       <Footer />
@@ -206,8 +122,9 @@ function MenuContent() {
 
 export default function MenuPageClient() {
   return (
-    <LanguageProvider>
+    <AppProviders>
       <MenuContent />
-    </LanguageProvider>
+    </AppProviders>
   )
 }
+
