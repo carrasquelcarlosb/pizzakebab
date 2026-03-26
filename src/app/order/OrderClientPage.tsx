@@ -2,9 +2,7 @@
 
 import type React from "react"
 
-import { useMemo, useState } from "react"
-import Link from "next/link"
-
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,39 +11,24 @@ import { Separator } from "@/components/ui/separator"
 import { MainNav } from "@/components/main-nav"
 import { MobileNav } from "@/components/mobile-nav"
 import { Footer } from "@/components/footer"
-import { AppProviders } from "@/components/app-providers"
-import { CartButton } from "@/components/cart-button"
-import { useLanguage } from "@/contexts/language-context"
-import { useCart } from "@/contexts/cart-context"
-import { formatCurrency as formatMenuCurrency } from "@/lib/menu-data"
-import { getAddressLabels, validateAddressFields, type AddressFields } from "@/lib/address"
+import { LanguageProvider, useLanguage } from "@/contexts/language-context"
 
-interface OrderForm extends AddressFields {
+interface OrderForm {
   firstName: string
   lastName: string
   email: string
   phone: string
+  address: string
+  city: string
+  zipCode: string
   paymentMethod: string
   cardNumber?: string
   expiryDate?: string
   cvv?: string
 }
 
-type OrderFormErrors = Partial<Record<keyof OrderForm, string>>
-
 function OrderContent() {
-  const { t, language } = useLanguage()
-  const {
-    items,
-    subtotal,
-    deliveryFee,
-    discount,
-    total,
-    orderMode,
-    setOrderMode,
-    submitCurrentOrder,
-    isLoading,
-  } = useCart()
+  const { t } = useLanguage()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<OrderForm>({
     firstName: "",
@@ -60,125 +43,60 @@ function OrderContent() {
     expiryDate: "",
     cvv: "",
   })
-  const [errors, setErrors] = useState<OrderFormErrors>({})
-  const addressLabels = getAddressLabels(t)
+  const [errors, setErrors] = useState<Partial<OrderForm>>({})
 
   const handleInputChange = (field: keyof OrderForm, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
   }
 
   const validateForm = (): boolean => {
-    const newErrors: OrderFormErrors = {}
+    const newErrors: Partial<OrderForm> = {}
 
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
-    if (!formData.email.trim()) newErrors.email = "Email is required"
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
+    if (!formData.firstName) newErrors.firstName = "First name is required"
+    if (!formData.lastName) newErrors.lastName = "Last name is required"
+    if (!formData.email) newErrors.email = "Email is required"
+    if (!formData.phone) newErrors.phone = "Phone number is required"
+    if (!formData.address) newErrors.address = "Address is required"
+    if (!formData.city) newErrors.city = "City is required"
+    if (!formData.zipCode) newErrors.zipCode = "ZIP code is required"
     if (!formData.paymentMethod) newErrors.paymentMethod = "Payment method is required"
 
-    const addressErrors = validateAddressFields(
-      {
-        address: formData.address,
-        city: formData.city,
-        zipCode: formData.zipCode,
-      },
-      t,
-    )
-
-    Object.assign(newErrors, addressErrors)
-
     if (formData.paymentMethod === "card") {
-      if (!formData.cardNumber?.trim()) newErrors.cardNumber = "Card number is required"
-      if (!formData.expiryDate?.trim()) newErrors.expiryDate = "Expiry date is required"
-      if (!formData.cvv?.trim()) newErrors.cvv = "CVV is required"
+      if (!formData.cardNumber) newErrors.cardNumber = "Card number is required"
+      if (!formData.expiryDate) newErrors.expiryDate = "Expiry date is required"
+      if (!formData.cvv) newErrors.cvv = "CVV is required"
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
     if (!validateForm()) return
 
     setIsSubmitting(true)
 
     try {
-      await submitCurrentOrder({
-        customer: {
-          name: `${formData.firstName} ${formData.lastName}`.trim(),
-          phone: formData.phone.trim() || undefined,
-          email: formData.email.trim() || undefined,
-        },
-      })
-      alert(t("checkout.success"))
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
+      // In a real app, you would process the order here
+      console.log("Order submitted:", formData)
+
+      // Redirect to success page or show success message
+      alert("Order placed successfully!")
     } catch (error) {
       console.error("Order submission failed:", error)
-      alert(t("checkout.failure"))
+      alert("Failed to place order. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const orderModeLabel = useMemo(
-    () => (orderMode === "delivery" ? t("cart.delivery") : t("cart.pickup")),
-    [orderMode, t],
-  )
-  const selectedModeLabel = `${t("checkout.selectedModePrefix")} ${orderModeLabel}`
-  const isPickup = orderMode === "pickup"
-  const formatCurrency = (value: number) => formatMenuCurrency(value, language)
-
-  if (isLoading && items.length === 0) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-50 w-full border-b bg-background">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="hidden md:flex">
-              <MainNav />
-            </div>
-            <div className="md:hidden">
-              <MobileNav />
-            </div>
-          </div>
-        </header>
-        <main className="flex-1">
-          <div className="container py-16 text-center text-muted-foreground">Loading order…</div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-50 w-full border-b bg-background">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="hidden md:flex">
-              <MainNav />
-            </div>
-            <div className="md:hidden">
-              <MobileNav />
-            </div>
-            <CartButton />
-          </div>
-        </header>
-        <main className="flex-1">
-          <div className="container py-16 text-center space-y-6">
-            <h1 className="text-3xl font-bold">{t("checkout.emptyTitle")}</h1>
-            <p className="text-muted-foreground">{t("checkout.emptySubtitle")}</p>
-            <Link href="/menu">
-              <Button className="bg-red-600 hover:bg-red-700">{t("cart.browseMenu")}</Button>
-            </Link>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
   }
 
   return (
@@ -191,41 +109,38 @@ function OrderContent() {
           <div className="md:hidden">
             <MobileNav />
           </div>
-          <CartButton />
         </div>
       </header>
 
       <main className="flex-1">
         <div className="container py-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">{t("checkout.title")}</h1>
-            <div className="text-sm text-muted-foreground">{selectedModeLabel}</div>
-          </div>
+          <h1 className="text-3xl font-bold mb-8">Complete Your Order</h1>
 
-          <form onSubmit={(event) => onSubmit(event)} className="grid md:grid-cols-2 gap-8">
+          <form onSubmit={(e) => onSubmit(e)} className="grid md:grid-cols-2 gap-8">
+            {/* Customer Information */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("checkout.sections.customerInformation")}</CardTitle>
+                  <CardTitle>Customer Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">{t("checkout.fields.firstName")}</Label>
+                      <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
-                        onChange={(event) => handleInputChange("firstName", event.target.value)}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
                         className={errors.firstName ? "border-red-500" : ""}
                       />
                       {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="lastName">{t("checkout.fields.lastName")}</Label>
+                      <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
-                        onChange={(event) => handleInputChange("lastName", event.target.value)}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
                         className={errors.lastName ? "border-red-500" : ""}
                       />
                       {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
@@ -233,23 +148,23 @@ function OrderContent() {
                   </div>
 
                   <div>
-                    <Label htmlFor="email">{t("checkout.fields.email")}</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(event) => handleInputChange("email", event.target.value)}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
                       className={errors.email ? "border-red-500" : ""}
                     />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">{t("checkout.fields.phone")}</Label>
+                    <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
                       value={formData.phone}
-                      onChange={(event) => handleInputChange("phone", event.target.value)}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
                       className={errors.phone ? "border-red-500" : ""}
                     />
                     {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -257,44 +172,41 @@ function OrderContent() {
                 </CardContent>
               </Card>
 
-              <Card className={isPickup ? "opacity-75" : ""}>
+              {/* Delivery Address */}
+              <Card>
                 <CardHeader>
-                  <CardTitle>{t("checkout.sections.deliveryAddress")}</CardTitle>
-                  {isPickup && <p className="text-sm text-muted-foreground">{t("checkout.pickupNotice")}</p>}
+                  <CardTitle>Delivery Address</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="address">{addressLabels.address}</Label>
+                    <Label htmlFor="address">Street Address</Label>
                     <Input
                       id="address"
                       value={formData.address}
-                      onChange={(event) => handleInputChange("address", event.target.value)}
+                      onChange={(e) => handleInputChange("address", e.target.value)}
                       className={errors.address ? "border-red-500" : ""}
-                      disabled={isPickup}
                     />
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="city">{addressLabels.city}</Label>
+                      <Label htmlFor="city">City</Label>
                       <Input
                         id="city"
                         value={formData.city}
-                        onChange={(event) => handleInputChange("city", event.target.value)}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
                         className={errors.city ? "border-red-500" : ""}
-                        disabled={isPickup}
                       />
                       {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                     </div>
                     <div>
-                      <Label htmlFor="zipCode">{addressLabels.zipCode}</Label>
+                      <Label htmlFor="zipCode">ZIP Code</Label>
                       <Input
                         id="zipCode"
                         value={formData.zipCode}
-                        onChange={(event) => handleInputChange("zipCode", event.target.value)}
+                        onChange={(e) => handleInputChange("zipCode", e.target.value)}
                         className={errors.zipCode ? "border-red-500" : ""}
-                        disabled={isPickup}
                       />
                       {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
                     </div>
@@ -302,9 +214,10 @@ function OrderContent() {
                 </CardContent>
               </Card>
 
+              {/* Payment Method */}
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("checkout.sections.paymentMethod")}</CardTitle>
+                  <CardTitle>Payment Method</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -315,7 +228,7 @@ function OrderContent() {
                         checked={formData.paymentMethod === "card"}
                         onChange={() => handleInputChange("paymentMethod", "card")}
                       />
-                      <span>{t("checkout.payment.card")}</span>
+                      <span>Credit/Debit Card</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -324,44 +237,45 @@ function OrderContent() {
                         checked={formData.paymentMethod === "cash"}
                         onChange={() => handleInputChange("paymentMethod", "cash")}
                       />
-                      <span>{t("checkout.payment.cash")}</span>
+                      <span>Cash on Delivery</span>
                     </label>
-                    {errors.paymentMethod && <p className="text-red-500 text-sm mt-1">{errors.paymentMethod}</p>}
                   </div>
 
                   {formData.paymentMethod === "card" && (
                     <div className="space-y-4 pt-4 border-t">
                       <div>
-                        <Label htmlFor="cardNumber">{t("checkout.fields.cardNumber")}</Label>
+                        <Label htmlFor="cardNumber">Card Number</Label>
                         <Input
                           id="cardNumber"
-                          placeholder={t("checkout.placeholders.cardNumber")}
+                          placeholder="1234 5678 9012 3456"
                           value={formData.cardNumber}
-                          onChange={(event) => handleInputChange("cardNumber", event.target.value)}
+                          onChange={(e) => handleInputChange("cardNumber", e.target.value)}
                           className={errors.cardNumber ? "border-red-500" : ""}
                         />
                         {errors.cardNumber && <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>}
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="expiryDate">{t("checkout.fields.expiryDate")}</Label>
+                          <Label htmlFor="expiryDate">Expiry Date</Label>
                           <Input
                             id="expiryDate"
-                            placeholder={t("checkout.placeholders.expiryDate")}
+                            placeholder="MM/YY"
                             value={formData.expiryDate}
-                            onChange={(event) => handleInputChange("expiryDate", event.target.value)}
+                            onChange={(e) => handleInputChange("expiryDate", e.target.value)}
                             className={errors.expiryDate ? "border-red-500" : ""}
                           />
-                          {errors.expiryDate && <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>}
+                          {errors.expiryDate && (
+                            <p className="text-red-500 text-sm mt-1">{errors.expiryDate}</p>
+                          )}
                         </div>
                         <div>
-                          <Label htmlFor="cvv">{t("checkout.fields.cvv")}</Label>
+                          <Label htmlFor="cvv">CVV</Label>
                           <Input
                             id="cvv"
-                            placeholder={t("checkout.placeholders.cvv")}
+                            placeholder="123"
                             value={formData.cvv}
-                            onChange={(event) => handleInputChange("cvv", event.target.value)}
+                            onChange={(e) => handleInputChange("cvv", e.target.value)}
                             className={errors.cvv ? "border-red-500" : ""}
                           />
                           {errors.cvv && <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>}
@@ -373,83 +287,55 @@ function OrderContent() {
               </Card>
             </div>
 
+            {/* Order Summary */}
             <div>
               <Card className="sticky top-24">
                 <CardHeader>
-                  <CardTitle>{t("checkout.sections.orderSummary")}</CardTitle>
+                  <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex gap-2" role="group" aria-label={t("cart.orderModeLabel")}>
-                    <Button
-                      type="button"
-                      variant={orderMode === "delivery" ? "default" : "outline"}
-                      className="flex-1"
-                      onClick={() => setOrderMode("delivery")}
-                    >
-                      {t("cart.delivery")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={orderMode === "pickup" ? "default" : "outline"}
-                      className="flex-1"
-                      onClick={() => setOrderMode("pickup")}
-                    >
-                      {t("cart.pickup")}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {orderMode === "delivery" ? t("cart.deliveryDescription") : t("cart.pickupDescription")}
-                  </p>
-
-                  <Separator />
-
                   <div className="space-y-2">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between">
-                        <span>
-                          {item.name}
-                          {item.quantity > 1 ? ` ×${item.quantity}` : ""}
-                        </span>
-                        <span>{formatCurrency(item.price * item.quantity)}</span>
-                      </div>
-                    ))}
+                    <div className="flex justify-between">
+                      <span>Spicy Kebab Pizza</span>
+                      <span>$14.99</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Mixed Grill Kebab</span>
+                      <span>$16.99</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Garlic Cheese Bread</span>
+                      <span>$5.99</span>
+                    </div>
                   </div>
 
                   <Separator />
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>{t("cart.subtotal")}</span>
-                      <span>{formatCurrency(subtotal)}</span>
+                      <span>Subtotal</span>
+                      <span>$37.97</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>{t("cart.deliveryFee")}</span>
-                      <span>{formatCurrency(deliveryFee)}</span>
+                      <span>Delivery Fee</span>
+                      <span>$2.99</span>
                     </div>
-                    {discount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Discount</span>
-                        <span>-{formatCurrency(discount)}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>Tax</span>
+                      <span>$3.28</span>
+                    </div>
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between font-bold text-lg">
-                    <span>{t("cart.total")}</span>
-                    <span>{formatCurrency(total)}</span>
+                    <span>Total</span>
+                    <span>$44.24</span>
                   </div>
 
                   <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 mt-6" disabled={isSubmitting}>
-                    {isSubmitting ? t("checkout.actions.processing") : t("checkout.actions.placeOrder")}
+                    {isSubmitting ? "Processing..." : "Place Order"}
                   </Button>
-
-                  <Link href="/cart" className="block">
-                    <Button type="button" variant="outline" className="w-full">
-                      {t("checkout.actions.backToCart")}
-                    </Button>
-                  </Link>
                 </CardContent>
               </Card>
             </div>
@@ -464,9 +350,8 @@ function OrderContent() {
 
 export default function OrderClientPage() {
   return (
-    <AppProviders>
+    <LanguageProvider>
       <OrderContent />
-    </AppProviders>
+    </LanguageProvider>
   )
 }
-
