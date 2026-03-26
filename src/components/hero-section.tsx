@@ -3,132 +3,182 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, Star, Play } from "lucide-react"
+import { ArrowRight, Star, Flame, Clock } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/contexts/language-context"
 
 export function HeroSection() {
   const { t } = useLanguage()
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
+    setMounted(true)
   }, [])
 
   return (
-    <section className="relative overflow-hidden min-h-screen flex items-center">
-      {/* Animated background layers */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/50 z-10" />
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-amber-900/20 z-10 transition-all duration-1000"
-        style={{
-          transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * 0.01}px)`,
-        }}
-      />
+    <section className="relative overflow-hidden min-h-screen flex items-center bg-void grain-overlay">
+      {/* Ember glow radials */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-ember-600/8 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-saffron-600/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-ember-900/20 rounded-full blur-[80px] pointer-events-none" />
 
-      {/* Background image with parallax */}
-      <div className="absolute inset-0">
-        <Image
-          src="/placeholder.svg?height=1080&width=1920"
-          alt="Delicious pizza and kebab"
-          fill
-          className="object-cover scale-110 animate-slow-zoom"
-          priority
-        />
-      </div>
+      <div className="container relative z-10 py-24">
+        <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
 
-      {/* Floating elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 bg-red-500/20 rounded-full blur-xl animate-float" />
-      <div className="absolute top-40 right-20 w-32 h-32 bg-amber-500/20 rounded-full blur-xl animate-float-delayed" />
-      <div className="absolute bottom-32 left-1/4 w-16 h-16 bg-red-400/30 rounded-full blur-lg animate-pulse" />
+          {/* ── Left column ── */}
+          <div className="space-y-8">
 
-      <div className="absolute inset-0 z-20 flex items-center">
-        <div className="container">
-          <div className="max-w-2xl space-y-8">
-            <Badge className="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 mb-4 animate-bounce-subtle">
-              <Star className="h-4 w-4 mr-2 animate-spin-slow" /> {t("hero.badge")}
-            </Badge>
+            {/* Eyebrow */}
+            <div
+              className={`flex flex-wrap items-center gap-3 ${mounted ? "animate-ember-fade" : "opacity-0"}`}
+            >
+              <div className="flex items-center gap-2 bg-ember-600/10 border border-ember-600/20 rounded-full px-3.5 py-1.5">
+                <Flame className="h-3.5 w-3.5 text-ember-500" />
+                <span className="text-ember-400 text-xs font-medium tracking-widest uppercase">
+                  Artisan Street Food
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-3 w-3 text-saffron-500 fill-saffron-500" />
+                ))}
+                <span className="text-cream-dim text-xs ml-0.5">4.9 · 500+ reviews</span>
+              </div>
+            </div>
 
-            <h1 className="text-6xl font-bold tracking-tight text-white sm:text-7xl md:text-8xl drop-shadow-2xl">
-              <span className="inline-block animate-slide-up">{t("hero.title")}</span>{" "}
-              <span className="text-red-500 inline-block animate-slide-up-delayed bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
-                {t("hero.pizza")}
-              </span>{" "}
-              <span className="inline-block animate-slide-up-delayed-2">&</span>{" "}
-              <span className="text-amber-400 inline-block animate-slide-up-delayed-3 bg-gradient-to-r from-amber-300 to-amber-500 bg-clip-text text-transparent">
-                {t("hero.kebab")}
-              </span>{" "}
-              <span className="inline-block animate-slide-up-delayed-4">{t("hero.experience")}</span>
-            </h1>
+            {/* Headline */}
+            <div
+              className={`${mounted ? "animate-ember-rise" : "opacity-0"}`}
+            >
+              <p className="font-display italic text-cream-dim text-xl md:text-2xl mb-1 leading-none">
+                The Art of
+              </p>
+              <h1 className="font-display font-black leading-[0.9] tracking-tight">
+                <span className="block text-6xl sm:text-7xl xl:text-8xl text-cream">
+                  Fire &amp;
+                </span>
+                <span
+                  className="block text-6xl sm:text-7xl xl:text-8xl"
+                  style={{
+                    background: "linear-gradient(135deg, #e8601a 0%, #f07535 40%, #c9911c 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Spice.
+                </span>
+              </h1>
+            </div>
 
-            <p className="text-xl text-white/90 drop-shadow-lg animate-fade-in-up max-w-lg leading-relaxed">
-              {t("hero.subtitle")}
+            {/* Subtitle */}
+            <p
+              className={`text-cream-dim text-base md:text-lg leading-relaxed max-w-md ${mounted ? "animate-ember-rise-delay-1" : "opacity-0"}`}
+            >
+              Slow-marinated meats, hand-stretched doughs, and centuries-old
+              spice blends — crafted fresh and at your door in 15 minutes.
             </p>
 
-            <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0 pt-6">
+            {/* CTAs */}
+            <div
+              className={`flex flex-wrap items-center gap-4 ${mounted ? "animate-ember-rise-delay-2" : "opacity-0"}`}
+            >
               <Link href="/menu">
-                <Button
-                  size="lg"
-                  className="bg-red-600 hover:bg-red-700 text-lg group relative overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-xl"
-                >
-                  <span className="relative z-10 flex items-center">
-                    {t("hero.viewMenu")}
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-800 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
-                </Button>
+                <button className="group flex items-center gap-2.5 bg-ember-600 hover:bg-ember-500 text-cream font-medium text-sm px-7 py-3.5 rounded-full transition-all duration-300 hover:shadow-[0_0_32px_rgba(232,96,26,0.45)]">
+                  Explore Menu
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </Link>
-
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black text-lg group backdrop-blur-sm transform hover:scale-105 transition-all duration-300"
-              >
-                <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                {t("hero.specialDeals")}
-              </Button>
+              <Link href="/order">
+                <button className="flex items-center gap-2 border border-cream/15 hover:border-cream/30 text-cream-dim hover:text-cream font-medium text-sm px-7 py-3.5 rounded-full transition-all duration-300 hover:bg-white/4">
+                  <Clock className="h-4 w-4" />
+                  Order Now · 15min
+                </button>
+              </Link>
             </div>
 
             {/* Stats */}
-            <div className="flex gap-8 pt-8 animate-fade-in-up-delayed">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">500+</div>
-                <div className="text-white/70 text-sm">Happy Customers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">4.9</div>
-                <div className="text-white/70 text-sm">Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">15min</div>
-                <div className="text-white/70 text-sm">Avg Delivery</div>
-              </div>
+            <div
+              className={`flex items-center gap-8 pt-6 border-t border-white/8 ${mounted ? "animate-ember-rise-delay-3" : "opacity-0"}`}
+            >
+              {[
+                { value: "500+", label: "Customers" },
+                { value: "4.9★", label: "Rating" },
+                { value: "15min", label: "Delivery" },
+              ].map((stat, i) => (
+                <div key={i} className="flex items-center gap-8">
+                  {i > 0 && <div className="w-px h-8 bg-white/10" />}
+                  <div>
+                    <div className="font-display font-bold text-2xl text-cream leading-none">
+                      {stat.value}
+                    </div>
+                    <div className="text-muted-foreground text-xs tracking-widest uppercase mt-1">
+                      {stat.label}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Enhanced Chef's Special Card */}
-          <div className="absolute bottom-8 right-8 md:right-16 bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hidden lg:block transform hover:scale-105 transition-all duration-500 shadow-2xl group">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-amber-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="h-20 w-20 relative rounded-full overflow-hidden border-3 border-amber-400 shadow-lg">
-                <Image src="/placeholder.svg?height=100&width=100" alt="Chef" fill className="object-cover" />
-              </div>
-              <div>
-                <p className="text-white font-bold text-lg">{t("hero.chefSpecial")}</p>
-                <p className="text-amber-300 text-sm leading-relaxed">{t("hero.chefSpecialText")}</p>
-                <div className="flex items-center mt-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-3 w-3 text-amber-400 fill-amber-400 mr-0.5" />
-                  ))}
-                  <span className="text-white/80 text-xs ml-2">Chef's Choice</span>
+          {/* ── Right column: visual ── */}
+          <div className="relative hidden lg:flex justify-center items-center">
+            {/* Outer glow ring */}
+            <div className="absolute w-[520px] h-[520px] rounded-full bg-ember-600/6 blur-3xl animate-ember-pulse" />
+
+            {/* Main image circle */}
+            <div className="relative w-[460px] h-[460px] animate-float-slow">
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "conic-gradient(from 0deg at 50% 50%, rgba(232,96,26,0.3) 0deg, rgba(201,145,28,0.1) 120deg, rgba(232,96,26,0.05) 240deg, rgba(232,96,26,0.3) 360deg)",
+                  padding: "2px",
+                  borderRadius: "50%",
+                }}
+              >
+                <div className="w-full h-full rounded-full overflow-hidden bg-ash">
+                  <Image
+                    src="/placeholder.svg?height=460&width=460"
+                    alt="Signature dish"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-void/70 via-void/10 to-transparent" />
                 </div>
+              </div>
+
+              {/* Floating card: Chef's Special */}
+              <div className="absolute -left-12 top-1/3 bg-ash border border-white/8 rounded-2xl p-4 shadow-2xl animate-float backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-ember-600/15 border border-ember-600/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Flame className="h-5 w-5 text-ember-500" />
+                  </div>
+                  <div>
+                    <div className="text-cream text-sm font-medium leading-none mb-1">Chef&apos;s Pick</div>
+                    <div className="text-muted-foreground text-xs">Mixed Grill Kebab</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating card: Deal */}
+              <div
+                className="absolute -right-8 bottom-1/4 bg-ash border border-saffron-600/20 rounded-2xl p-4 shadow-2xl"
+                style={{ animation: "gentle-float 7s 1s ease-in-out infinite" }}
+              >
+                <div className="text-saffron-500 text-[10px] tracking-widest uppercase font-medium mb-1.5">
+                  Today&apos;s Deal
+                </div>
+                <div className="font-display font-black text-2xl text-cream leading-none">
+                  20% Off
+                </div>
+                <div className="text-muted-foreground text-xs mt-1">Code: WELCOME20</div>
+              </div>
+
+              {/* Floating rating dot */}
+              <div className="absolute top-8 right-4 bg-saffron-600 text-void text-xs font-bold w-12 h-12 rounded-full flex flex-col items-center justify-center shadow-lg">
+                <span className="text-base leading-none font-display font-black">4.9</span>
+                <span className="text-[8px] leading-none mt-0.5">★★★★★</span>
               </div>
             </div>
           </div>
@@ -136,9 +186,9 @@ export function HeroSection() {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
-        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-bounce"></div>
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+        <div className="w-5 h-8 border border-cream/15 rounded-full flex justify-center pt-2">
+          <div className="w-0.5 h-2 bg-cream/35 rounded-full animate-scroll-dot" />
         </div>
       </div>
     </section>

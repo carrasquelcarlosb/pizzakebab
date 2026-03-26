@@ -2,10 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Utensils } from "lucide-react"
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react"
 
 import { InteractiveMenuCard } from "@/components/interactive-menu-card"
-import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
 
 export function FeaturedItems() {
@@ -85,70 +84,73 @@ export function FeaturedItems() {
   }
 
   useEffect(() => {
-    const scrollElement = scrollRef.current
-    if (scrollElement) {
-      scrollElement.addEventListener("scroll", checkScrollButtons)
-      // Initial check
+    const el = scrollRef.current
+    if (el) {
+      el.addEventListener("scroll", checkScrollButtons)
       checkScrollButtons()
-
-      return () => scrollElement.removeEventListener("scroll", checkScrollButtons)
+      return () => el.removeEventListener("scroll", checkScrollButtons)
     }
   }, [])
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current
-      const scrollAmount = direction === "left" ? -clientWidth / 2 : clientWidth / 2
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" })
+      const amount = direction === "left" ? -scrollRef.current.clientWidth / 2 : scrollRef.current.clientWidth / 2
+      scrollRef.current.scrollBy({ left: amount, behavior: "smooth" })
     }
   }
 
   return (
-    <section className="py-16 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-200 to-transparent"></div>
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-gradient-radial from-amber-200/20 to-transparent rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-radial from-red-200/20 to-transparent rounded-full blur-3xl"></div>
+    <section className="py-20 bg-pit relative overflow-hidden">
+      {/* Subtle top-border glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-ember-600/30 to-transparent" />
 
       <div className="container relative">
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-100 p-2 rounded-lg">
-              <Utensils className="h-6 w-6 text-red-600" />
+        {/* Header */}
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-ember-500" />
+              <span className="text-ember-400 text-xs font-medium tracking-widest uppercase">
+                Hand-Picked
+              </span>
             </div>
-            <h2 className="text-3xl font-bold">{t("featured.title")}</h2>
+            <h2 className="font-display font-bold text-3xl md:text-4xl text-cream leading-tight">
+              {t("featured.title")}
+            </h2>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full border-red-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all disabled:opacity-50"
+
+          <div className="flex items-center gap-2">
+            <button
+              className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-cream-dim hover:text-cream hover:border-white/20 disabled:opacity-30 transition-all"
               onClick={() => scroll("left")}
               disabled={!canScrollLeft}
             >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full border-red-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all disabled:opacity-50"
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              className="w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-cream-dim hover:text-cream hover:border-white/20 disabled:opacity-30 transition-all"
               onClick={() => scroll("right")}
               disabled={!canScrollRight}
             >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-            <Link href="/menu" className="text-red-600 hover:text-red-700 font-medium hover:underline ml-2">
-              {t("featured.viewAll")}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <Link
+              href="/menu"
+              className="ml-2 text-ember-400 hover:text-ember-300 text-sm font-medium transition-colors"
+            >
+              {t("featured.viewAll")} →
             </Link>
           </div>
         </div>
 
+        {/* Carousel */}
         <div
           ref={scrollRef}
-          className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory"
+          className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {featuredItems.map((item) => (
-            <div key={item.id} className="min-w-[280px] sm:min-w-[320px] snap-start">
+            <div key={item.id} className="min-w-[280px] sm:min-w-[300px] snap-start">
               <InteractiveMenuCard item={item} />
             </div>
           ))}

@@ -65,7 +65,7 @@ export function FloatingActionButton() {
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 shadow-lg transition-all duration-300 transform hover:scale-110",
+            "h-14 w-14 rounded-full bg-ember-600 hover:bg-ember-500 shadow-[0_0_24px_rgba(232,96,26,0.4)] transition-all duration-300 transform hover:scale-110",
             isOpen && "rotate-45",
           )}
         >

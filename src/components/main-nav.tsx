@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Phone } from "lucide-react"
+import { Phone, Flame } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
@@ -12,65 +11,53 @@ export function MainNav() {
   const { t } = useLanguage()
 
   const navItems = [
-    {
-      title: t("nav.home"),
-      href: "/",
-      active: true,
-    },
-    {
-      title: t("nav.menu"),
-      href: "/menu",
-    },
-    {
-      title: t("nav.deals"),
-      href: "/deals",
-    },
-    {
-      title: t("nav.locations"),
-      href: "/locations",
-    },
-    {
-      title: t("nav.about"),
-      href: "/about",
-    },
+    { title: t("nav.home"),      href: "/",          active: true },
+    { title: t("nav.menu"),      href: "/menu" },
+    { title: t("nav.deals"),     href: "/deals" },
+    { title: t("nav.locations"), href: "/locations" },
+    { title: t("nav.about"),     href: "/about" },
   ]
 
   return (
-    <nav className="flex items-center space-x-6 text-sm font-medium">
-      <Link href="/" className="flex items-center space-x-2">
-        <div className="relative overflow-hidden rounded-full bg-gradient-to-r from-red-600 to-amber-500 p-1 shadow-lg">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xl font-bold text-red-600">
-            PK
-          </span>
+    <nav className="flex items-center gap-8">
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+        <div className="w-8 h-8 bg-ember-600 rounded-lg flex items-center justify-center shadow-[0_0_16px_rgba(232,96,26,0.35)] group-hover:shadow-[0_0_24px_rgba(232,96,26,0.55)] transition-shadow">
+          <Flame className="h-4 w-4 text-cream" />
         </div>
-        <span className="font-bold text-xl">
-          Pizza<span className="text-red-600">Kebab</span>
+        <span className="font-display font-bold text-lg text-cream leading-none">
+          Pizza<span className="text-ember-500">Kebab</span>
         </span>
       </Link>
-      <div className="hidden md:flex items-center space-x-6">
+
+      {/* Links */}
+      <div className="hidden md:flex items-center gap-6">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "transition-colors hover:text-red-600 relative py-1",
-              item.active ? "text-red-600 font-bold" : "text-foreground",
+              "text-sm transition-colors duration-200 relative py-1",
+              item.active
+                ? "text-ember-400 font-medium"
+                : "text-cream-dim hover:text-cream"
             )}
           >
             {item.title}
-            {item.active && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600 rounded-full"></span>}
+            {item.active && (
+              <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-ember-500 rounded-full" />
+            )}
           </Link>
         ))}
       </div>
-      <div className="hidden lg:flex items-center border-l border-slate-200 pl-6 ml-2">
-        <Button variant="ghost" size="sm" className="text-slate-600 hover:text-red-600 gap-2">
-          <Phone className="h-4 w-4" />
-          <span className="font-bold">{t("nav.phone")}</span>
-        </Button>
+
+      {/* Phone */}
+      <div className="hidden lg:flex items-center gap-2 border-l border-white/8 pl-8">
+        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-muted-foreground text-sm">{t("nav.phone")}</span>
       </div>
-      <div className="ml-4">
-        <LanguageSwitcher />
-      </div>
+
+      <LanguageSwitcher />
     </nav>
   )
 }
