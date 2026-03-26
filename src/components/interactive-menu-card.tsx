@@ -196,10 +196,10 @@ export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
             className="font-display font-bold text-2xl"
             style={{ color: "#e8601a" }}
           >
-            ${displayPrice}
+            {formattedPrice}
           </span>
-          {item.discount && (
-            <span className="text-muted-foreground text-sm line-through">${item.price.toFixed(2)}</span>
+          {item.discount && formattedOriginalPrice && (
+            <span className="text-muted-foreground text-sm line-through">{formattedOriginalPrice}</span>
           )}
         </div>
 
