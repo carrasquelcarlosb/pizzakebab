@@ -1,37 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-// Sample menu data
-const menuData = {
-  pizzas: [
-    {
-      id: 101,
-      name: "Spicy Kebab Pizza",
-      description: "Our signature pizza topped with juicy kebab meat, jalapeños, and special spicy sauce",
-      price: 14.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: "Specialty Pizzas",
-      rating: 4.8,
-      popular: true,
-      ingredients: ["kebab meat", "jalapeños", "mozzarella", "tomato sauce", "spicy sauce"],
-      allergens: ["gluten", "dairy"],
-    },
-    // Add more items...
-  ],
-  kebabs: [
-    {
-      id: 201,
-      name: "Mixed Grill Kebab",
-      description: "A delicious mix of chicken, beef, and lamb kebab with grilled vegetables",
-      price: 16.99,
-      image: "/placeholder.svg?height=300&width=300",
-      category: "Kebabs",
-      rating: 4.7,
-      ingredients: ["chicken", "beef", "lamb", "grilled vegetables", "rice"],
-      allergens: [],
-    },
-    // Add more items...
-  ],
-}
+import { menuCatalog } from "@/data/menu-catalog"
 
 // Next.js 15: GET route handler
 export async function GET(request: NextRequest) {
@@ -41,7 +10,8 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get("limit")
     const sort = searchParams.get("sort")
 
-    let data = category ? menuData[category as keyof typeof menuData] || [] : Object.values(menuData).flat()
+    const catalogValues = Object.values(menuCatalog)
+    let data = category ? menuCatalog[category] || [] : catalogValues.flat()
 
     // Apply sorting
     if (sort === "price-low") {

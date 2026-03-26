@@ -40,6 +40,8 @@ export function AnimatedBackground() {
       })
     }
 
+    let animationFrameId = 0
+
     function animate() {
       if (!ctx || !canvas) return
 
@@ -59,7 +61,7 @@ export function AnimatedBackground() {
         ctx.fill()
       })
 
-      requestAnimationFrame(animate)
+      animationFrameId = requestAnimationFrame(animate)
     }
 
     animate()
@@ -70,7 +72,10 @@ export function AnimatedBackground() {
     }
 
     window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      cancelAnimationFrame(animationFrameId)
+    }
   }, [])
 
   return (

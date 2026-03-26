@@ -1,15 +1,28 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { translations, type Language } from "@/lib/translations"
+import { translations, type Language, type TranslationKey } from "@/lib/translations"
 
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string) => string
+  t: (key: TranslationKey) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
+
+type TranslationDictionary = Record<string, unknown>
+
+const getNestedValue = (dictionary: TranslationDictionary, path: readonly string[]) => {
+  // Anti-pattern explained: mutating a loosely typed `any` while walking nested objects (the previous approach)
+  // hides type issues and duplicates fallback logic. A small pure helper keeps the lookup obvious and testable.
+  return path.reduce<unknown>((value, segment) => {
+    if (value && typeof value === "object" && segment in value) {
+      return (value as TranslationDictionary)[segment]
+    }
+    return undefined
+  }, dictionary)
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en")
@@ -27,28 +40,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("language", lang)
   }
 
-  const t = (key: string): string => {
+  const t = (key: TranslationKey): string => {
     const keys = key.split(".")
-    let value: any = translations[language]
 
-    for (const k of keys) {
-      if (value && typeof value === "object" && k in value) {
-        value = value[k]
-      } else {
-        // Fallback to English if key not found
-        value = translations.en
-        for (const fallbackKey of keys) {
-          if (value && typeof value === "object" && fallbackKey in value) {
-            value = value[fallbackKey]
-          } else {
-            return key // Return key if not found in fallback
-          }
-        }
-        break
-      }
+    const localized = getNestedValue(translations[language] as TranslationDictionary, keys)
+    if (typeof localized === "string") {
+      return localized
     }
 
-    return typeof value === "string" ? value : key
+    const fallback = getNestedValue(translations.en as TranslationDictionary, keys)
+    // Anti-pattern explained: silently returning partially resolved objects made debugging impossible.
+    // By checking for a final string result we expose missing translations quickly while still returning the key.
+    return typeof fallback === "string" ? fallback : key
   }
 
   return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>

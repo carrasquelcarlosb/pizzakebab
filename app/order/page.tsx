@@ -1,4 +1,4 @@
-import OrderClientPage from "./OrderClientPage"
+import OrderClientPage from "@/app/order/OrderClientPage"
 
 export const metadata = {
   title: "Order - PizzaKebab",

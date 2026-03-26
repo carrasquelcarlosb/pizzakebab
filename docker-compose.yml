@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://root:example@mongo:27017/?authSource=admin
+      MONGO_DB_NAME: pizzakebab
+      TENANT_HOST_MAP: '{"localhost":"demo"}'
+      TENANT_BASE_DOMAIN: localhost
+    depends_on:
+      - mongo
+    ports:
+      - "4000:4000"
+    command: ["npm", "run", "api:start"]
+
+volumes:
+  mongo-data:

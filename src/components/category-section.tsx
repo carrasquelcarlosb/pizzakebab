@@ -5,6 +5,11 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
 import { useLanguage } from "@/contexts/language-context"
+import {
+  getMenuCategoryCount,
+  getMenuCategoryLabelKey,
+  type MenuCategory,
+} from "@/lib/menu-data"
 
 export function CategorySection() {
   const { t } = useLanguage()

@@ -6,6 +6,8 @@ import Image from "next/image"
 import { ShoppingCart, Star, Heart, Share2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -26,17 +28,27 @@ interface InteractiveMenuCardProps {
 
 export function InteractiveMenuCard({ item }: InteractiveMenuCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [isAdding, setIsAdding] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
+  const { addItem, items } = useCart()
 
-  const displayPrice = item.discount
-    ? (item.price - (item.price * item.discount) / 100).toFixed(2)
-    : item.price.toFixed(2)
+  const effectivePrice = item.discount
+    ? item.price - (item.price * item.discount) / 100
+    : item.price
+  const formattedPrice = formatCurrency(effectivePrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : null
+  const quantityInCart = items.find((line) => line.id === item.id)?.quantity ?? 0
+  const isInCart = quantityInCart > 0
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (isAdding) {
+      return
+    }
     setIsAdding(true)
     setTimeout(() => setIsAdding(false), 1500)
   }

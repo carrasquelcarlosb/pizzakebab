@@ -1,5 +1,12 @@
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
+
+const enableReactCompiler = process.env.NEXT_ENABLE_REACT_COMPILER === "true"
+const enablePartialPrerendering = process.env.NEXT_ENABLE_PPR === "true"
+
 const nextConfig = {
-  // Next.js 15 features
+  // Next.js experimental features are gated behind explicit opt-in flags.
   experimental: {
     // Enable server actions
     serverActions: {
@@ -43,7 +50,7 @@ const nextConfig = {
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
-  
+
   // Security headers
   async headers() {
     return [
@@ -78,6 +85,16 @@ const nextConfig = {
     ]
   },
 
+  // Webpack configuration for custom loaders like SVGR
+  webpack: (config) => {
+    // SVGR configuration
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"],
+    });
+
+    // Bundle analyzer (optional)
+    if (process.env.ANALYZE === "true") {
   // Bundle analyzer (optional)
   ...(process.env.ANALYZE === "true" && {
     webpack: (config) => {
@@ -86,9 +103,10 @@ const nextConfig = {
           enabled: true,
         }))()
       )
-      return config
-    },
-  }),
+    }
+
+    return config
+  },
 }
 
 export default nextConfig

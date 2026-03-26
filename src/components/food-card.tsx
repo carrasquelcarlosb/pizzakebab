@@ -6,6 +6,8 @@ import { Plus, ShoppingCart, Star } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
+import { useCart } from "@/contexts/cart-context"
+import { formatCurrency } from "@/lib/menu-data"
 
 interface FoodItem {
   id: number
@@ -29,11 +31,18 @@ export function FoodCard({ item }: FoodCardProps) {
   const [isAdding, setIsAdding]   = useState(false)
   const { t } = useLanguage()
 
-  const displayPrice = item.discount
-    ? (item.price - (item.price * item.discount) / 100).toFixed(2)
-    : item.price.toFixed(2)
+  const discountedPrice = item.discount
+    ? item.price - (item.price * item.discount) / 100
+    : item.price
+  const formattedPrice = formatCurrency(discountedPrice, language)
+  const formattedOriginalPrice = item.discount
+    ? formatCurrency(item.price, language)
+    : undefined
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    if (isAdding) {
+      return
+    }
     setIsAdding(true)
     setTimeout(() => setIsAdding(false), 1000)
   }

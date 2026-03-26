@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/contexts/language-context"
 
-export function EnhancedTestimonials() {
+export function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0)
   const { t } = useLanguage()
 
@@ -52,7 +52,7 @@ export function EnhancedTestimonials() {
       setActiveIndex((current) => (current + 1) % testimonials.length)
     }, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [testimonials.length])
 
   return (
     <section className="py-16 bg-slate-50 relative overflow-hidden">
@@ -103,7 +103,7 @@ export function EnhancedTestimonials() {
                           </div>
                         </div>
                       </div>
-                      <p className="text-slate-700 italic">"{testimonial.text}"</p>
+                      <p className="text-slate-700 italic">&ldquo;{testimonial.text}&rdquo;</p>
                     </CardContent>
                   </Card>
                 </div>
